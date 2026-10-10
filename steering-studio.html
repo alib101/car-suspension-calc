@@ -1,0 +1,1552 @@
+<title>Steering Studio</title>
+<style>
+:root{
+  --bg:#e9edf1; --surface:#ffffff; --surface-2:#f3f6f9; --inset:#eef2f6;
+  --ink:#19212b; --muted:#5b6773; --faint:#8b96a2; --line:#d3dae1; --line-2:#e4e9ee;
+  --accent:#cf7318; --accent-2:#158a86; --accent-soft:#f6e6d3;
+  --good:#2f9457; --warn:#c9820c; --bad:#cf4436;
+  --wheel:#6b7885; --link:#2f3944; --rod:#c07c2a; --pivot:#3b4653; --ghost:#b9c3cc;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.06);
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+:root:not([data-theme="light"]){@media (prefers-color-scheme:dark){
+  --bg:#0f141a; --surface:#181f27; --surface-2:#1e2731; --inset:#141b22;
+  --ink:#e5ebf1; --muted:#93a0ac; --faint:#67727e; --line:#2b343f; --line-2:#232c35;
+  --accent:#eda23e; --accent-2:#3bb6b0; --accent-soft:#33291a;
+  --good:#3fa96a; --warn:#d99a2b; --bad:#e05a4c;
+  --wheel:#8492a0; --link:#c4cdd6; --rod:#eda23e; --pivot:#aeb9c4; --ghost:#3a444f;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#181f27; --surface-2:#1e2731; --inset:#141b22;
+  --ink:#e5ebf1; --muted:#93a0ac; --faint:#67727e; --line:#2b343f; --line-2:#232c35;
+  --accent:#eda23e; --accent-2:#3bb6b0; --accent-soft:#33291a;
+  --good:#3fa96a; --warn:#d99a2b; --bad:#e05a4c;
+  --wheel:#8492a0; --link:#c4cdd6; --rod:#eda23e; --pivot:#aeb9c4; --ghost:#3a444f;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1220px;margin:0 auto;padding-block:18px;padding-left:16px;padding-right:16px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.brand h1{font-size:20px;margin:0;letter-spacing:-.01em;font-weight:600}
+.brand .sub{color:var(--muted);font-size:12.5px;margin-top:2px;max-width:60ch}
+.brand .tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--accent);border:1px solid var(--line);border-radius:5px;
+  padding:2px 7px;margin-bottom:6px;background:var(--accent-soft)}
+.tbtn{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:7px 10px;cursor:pointer}
+.tbtn:hover{color:var(--ink);border-color:var(--faint)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap}
+.tab{appearance:none;background:none;border:none;font-family:var(--sans);font-size:13.5px;
+  color:var(--muted);padding:9px 14px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.layout{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.controls{padding:4px 2px}
+.grp{border-bottom:1px solid var(--line-2);padding:12px 14px}
+.grp:last-child{border-bottom:none}
+.grp h3{margin:0 0 10px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.field{display:grid;grid-template-columns:1fr 74px;align-items:center;gap:8px;margin-bottom:9px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12.5px;color:var(--muted)}
+.field .u{font-size:10.5px;color:var(--faint);font-family:var(--mono)}
+.field input[type=number]{width:100%;font-family:var(--mono);font-size:12.5px;text-align:right;
+  padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--inset);color:var(--ink)}
+.field input[type=number]:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+.slider{padding:12px 14px;border-bottom:1px solid var(--line-2)}
+.slider .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.slider .row .val{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:500}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+.playrow{display:flex;gap:8px;margin-top:10px}
+.playrow button{flex:1;font-family:var(--sans);font-size:12.5px;color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:7px;padding:7px;cursor:pointer}
+.playrow button:hover{border-color:var(--faint)}
+.stage{padding:12px}
+.viewport{width:100%;background:var(--inset);border:1px solid var(--line-2);border-radius:9px;display:block}
+.readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media (max-width:520px){.readouts{grid-template-columns:repeat(2,1fr)}}
+.ro{background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:9px 10px}
+.ro .k{font-size:10.5px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+.ro .v{font-family:var(--mono);font-size:17px;margin-top:3px;font-variant-numeric:tabular-nums}
+.ro .v small{font-size:11px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.chip{font-family:var(--mono);font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);
+  display:inline-flex;align-items:center;gap:6px;background:var(--surface-2)}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.chip.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+.chip.good::before{background:var(--good)}
+.chip.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.chip.warn::before{background:var(--warn)}
+.chip.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.chip.bad::before{background:var(--bad)}
+.chartcard{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:14px}
+.chartcard h3{margin:0 0 2px;font-size:13px;font-weight:600}
+.chartcard .cap{color:var(--muted);font-size:12px;margin:0 0 10px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:0;border-top:2px solid var(--faint);display:inline-block}
+.hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+.guide{padding:20px 22px;max-width:74ch}
+.guide h2{font-size:16px;margin:0 0 4px}
+.guide h4{font-size:13px;margin:18px 0 5px;color:var(--accent)}
+.guide p{margin:0 0 9px;color:var(--ink)}
+.guide ul{margin:0 0 9px;padding-left:18px;color:var(--ink)}
+.guide li{margin-bottom:4px}
+.guide code{font-family:var(--mono);font-size:12px;background:var(--inset);padding:1px 5px;border-radius:4px}
+.foot{color:var(--faint);font-size:11.5px;margin-top:16px;text-align:center;line-height:1.6}
+svg text{font-family:var(--mono)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="tag">RC steering · double wishbone</div>
+      <h1>Steering Studio</h1>
+      <div class="sub">Tune the plan-view linkage for symmetric throw and Ackermann, then check bump steer through the suspension travel. All dimensions in mm / degrees.</div>
+    </div>
+    <button class="tbtn" id="theme">◐ Theme</button>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="steer">Steering &amp; Ackermann</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="bump">Bump Steer</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="sus">Suspension</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="ds">Driveshaft</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="align">Alignment</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="servo">Servo Drive</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="3d">3D View</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="guide">Design Notes</button>
+  </div>
+
+  <!-- ================= STEERING TAB ================= -->
+  <section id="tab-steer">
+    <div class="layout">
+      <div class="panel controls">
+        <div class="grp">
+          <h3>Vehicle</h3>
+          <div class="field"><label>Wheelbase</label><input type="number" id="s_wb" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Kingpin track</label><input type="number" id="s_tk" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Kingpin offset</label><input type="number" id="s_kpoff" step="1"><span class="u">mm</span></div>
+          <div class="hint">Lateral gap from the wishbone outer ball to the kingpin — your split steering/suspension pivots. "Solve everything" keeps them this far apart instead of merging them.</div>
+        </div>
+        <div class="grp">
+          <h3>Steering arm</h3>
+          <div class="field"><label>Arm length</label><input type="number" id="s_la" step="0.5"><span class="u">mm</span></div>
+          <div class="field"><label>Arm angle</label><input type="number" id="s_aa" step="0.5"><span class="u">deg</span></div>
+          <div class="hint" id="s_ideal">Textbook arm angle: –</div>
+          <div class="field" style="margin-top:8px"><label>Target Ackermann</label><input type="number" id="s_target" step="5" value="90"><span class="u">%</span></div>
+          <div class="playrow" style="margin-top:2px"><button id="s_solve">Solve arm angle →</button></div>
+          <div class="playrow" style="margin-top:4px"><button id="s_solveall">⚙ Solve everything (tie tabs)</button></div>
+          <div class="hint" id="s_solvehint"></div>
+        </div>
+        <div class="grp">
+          <h3>Inner pickups (bellcrank / rack out)</h3>
+          <div class="field"><label>Half-spacing</label><input type="number" id="s_ix" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Fore/aft</label><input type="number" id="s_iy" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Target ½-spacing</label><input type="number" id="s_targeths" step="0.5" placeholder="auto"><span class="u">mm</span></div>
+          <div class="hint">Both pickups move laterally together — a rack, or a servo-saver bellcrank. Set Target ½-spacing to force the pickup out (e.g. to clear a gearbox); Solve everything slides the whole steering out via the kingpin offset to reach it — staying flat, arm length unchanged, kingpin track widens a little. Blank = natural spacing.</div>
+          <div class="hint" id="s_trackrod" style="color:var(--accent);font-family:var(--mono);font-size:11px">Track rod length: –</div>
+        </div>
+        <div class="slider">
+          <div class="row"><label for="s_input">Steering input</label><span class="val" id="s_inputv">0.0 mm</span></div>
+          <input type="range" id="s_input" min="-1" max="1" step="0.001" value="0">
+          <div class="field" style="margin-top:10px"><label>Max pickup travel ±</label><input type="number" id="s_smax" step="0.5"><span class="u">mm</span></div>
+          <div class="playrow">
+            <button id="s_centre">Centre</button>
+            <button id="s_play">▶ Sweep</button>
+          </div>
+        </div>
+        <div class="grp">
+          <h3>Servo sizing</h3>
+          <div class="field"><label>Servo throw ±</label><input type="number" id="s_servo" step="1"><span class="u">deg</span></div>
+          <div class="field"><label>Horn length</label><input type="number" id="s_horn" step="0.5"><span class="u">mm</span></div>
+          <div class="hint" id="s_servohint">–</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel stage">
+          <svg class="viewport" id="s_svg" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet" aria-label="Plan view of the steering linkage"></svg>
+          <div class="readouts">
+            <div class="ro"><div class="k">Left wheel</div><div class="v" id="ro_l">0.0<small>°</small></div></div>
+            <div class="ro"><div class="k">Right wheel</div><div class="v" id="ro_r">0.0<small>°</small></div></div>
+            <div class="ro"><div class="k">Ackermann</div><div class="v" id="ro_ack">–</div></div>
+            <div class="ro"><div class="k">Turn radius</div><div class="v" id="ro_rad">–</div></div>
+          </div>
+          <div class="chips" id="s_chips"></div>
+        </div>
+        <div class="chartcard">
+          <h3>Ackermann curve</h3>
+          <p class="cap">Inner-wheel angle vs outer-wheel angle across the full sweep, against the two reference geometries.</p>
+          <svg id="s_chart" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block"></svg>
+          <div class="legend">
+            <span><i style="border-color:var(--accent)"></i>Your linkage</span>
+            <span><i style="border-color:var(--accent-2);border-top-style:dashed"></i>100% Ackermann (ideal)</span>
+            <span><i style="border-color:var(--faint);border-top-style:dotted"></i>Parallel steer (0%)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BUMP TAB ================= -->
+  <section id="tab-bump" hidden>
+    <div class="layout">
+      <div class="panel controls">
+        <div class="grp">
+          <h3>Suspension (double wishbone)</h3>
+          <div class="field"><label>Lower inner pivot X</label><input type="number" id="b_lix" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Lower inner pivot Z</label><input type="number" id="b_liz" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Lower wishbone length</label><input type="number" id="b_ll" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Lower arm angle</label><input type="number" id="b_warm" step="1"><span class="u">deg</span></div>
+          <div class="field"><label>Upper inner pivot X</label><input type="number" id="b_uix" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Wishbone spacing</label><input type="number" id="b_spacing" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Upper wishbone length</label><input type="number" id="b_ul" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Knuckle height</label><input type="number" id="b_knuckleH" step="1"><span class="u">mm</span></div>
+          <div class="hint" id="b_derived">Upper pivot Z (= lower Z + spacing) and the four outer balls are calculated. Lower arm angle sets the rest position.</div>
+        </div>
+        <div class="grp">
+          <h3>Track-rod outer ball (on upright)</h3>
+          <div class="field"><label>X (lateral)</label><input type="number" id="b_tox" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Z (height)</label><input type="number" id="b_toz" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Y (fore/aft)</label><input type="number" id="b_toy" step="1"><span class="u">mm</span></div>
+        </div>
+        <div class="grp">
+          <h3>Track-rod inner ball (chassis)</h3>
+          <div class="field"><label>X (lateral)</label><input type="number" id="b_tix" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Z (height)</label><input type="number" id="b_tiz" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Y (fore/aft)</label><input type="number" id="b_tiy" step="1"><span class="u">mm</span></div>
+          <div class="playrow" style="margin-top:6px"><button id="b_flatten">⌖ Flatten bump steer</button></div>
+          <div class="hint" id="b_flathint">Solves the inner ball X/Z for the flattest toe curve (Y doesn't affect it).</div>
+        </div>
+        <div class="grp">
+          <h3>Ride height &amp; travel</h3>
+          <div class="field"><label>Ride offset (static)</label><input type="number" id="b_ride" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Droop travel</label><input type="number" id="b_droop" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Bump travel</label><input type="number" id="b_bump" step="1"><span class="u">mm</span></div>
+          <div class="hint">Ride offset = where the wishbone rests vs where you measured the geometry (negative = drooped). Toe is referenced to rest.</div>
+        </div>
+        <div class="slider">
+          <div class="row"><label for="b_input">Travel from rest</label><span class="val" id="b_inputv">0 mm</span></div>
+          <input type="range" id="b_input" min="-1" max="1" step="0.001" value="0">
+          <div class="playrow">
+            <button id="b_centre">Rest</button>
+            <button id="b_play">▶ Cycle</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel stage">
+          <svg class="viewport" id="b_svg" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet" aria-label="Front view of the double-wishbone corner"></svg>
+          <div class="readouts">
+            <div class="ro"><div class="k">Toe change</div><div class="v" id="ro_toe">0.0<small>°</small></div></div>
+            <div class="ro"><div class="k">Rate @ here</div><div class="v" id="ro_rate">–</div></div>
+            <div class="ro"><div class="k">Roll centre Z</div><div class="v" id="ro_rc">–</div></div>
+            <div class="ro"><div class="k">Tie-rod aim</div><div class="v" id="ro_aim">–</div></div>
+          </div>
+          <div class="chips" id="b_chips"></div>
+        </div>
+        <div class="chartcard">
+          <h3>Bump-steer curve</h3>
+          <p class="cap">Toe change vs vertical wheel travel (droop → bump). Flat through the middle is what you want.</p>
+          <svg id="b_chart" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block"></svg>
+          <div class="legend">
+            <span><i style="border-color:var(--accent)"></i>Toe vs travel</span>
+            <span><i style="border-color:var(--faint);border-top-style:dotted"></i>Zero toe</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SUSPENSION TAB ================= -->
+  <section id="tab-sus" hidden>
+    <div class="layout">
+      <div class="panel controls">
+        <div class="grp">
+          <h3>Shock mounts</h3>
+          <div class="field"><label>Lower mount (from pivot)</label><input type="number" id="su_sm" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Upper mount X</label><input type="number" id="su_sux" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Upper mount Z</label><input type="number" id="su_suz" step="1"><span class="u">mm</span></div>
+          <div class="hint">Lower end sits on the lower wishbone this far out from the inner pivot; upper end on the chassis / shock tower. Mounting further out or standing the shock more upright both raise the shock's share of the travel.</div>
+        </div>
+        <div class="grp">
+          <h3>Spring</h3>
+          <div class="field"><label>Spring rate</label><input type="number" id="su_spring" step="0.1"><span class="u">N/mm</span></div>
+          <div class="field"><label>Corner weight</label><input type="number" id="su_weight" step="10"><span class="u">g</span></div>
+          <div class="field"><label>Target sag</label><input type="number" id="su_sagt" step="1"><span class="u">%</span></div>
+          <div class="hint">Corner weight = the mass this one wheel carries. Sag is how far it settles under that weight — aim ~25–35% of travel.</div>
+        </div>
+        <div class="slider">
+          <div class="row"><label for="su_input">Wheel travel</label><span class="val" id="su_inputv">0 mm</span></div>
+          <input type="range" id="su_input" min="-1" max="1" step="0.001" value="0">
+          <div class="playrow"><button id="su_centre">Rest</button><button id="su_play">▶ Cycle</button></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel stage">
+          <svg class="viewport" id="su_svg" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet" aria-label="Front view of the suspension and shock"></svg>
+          <div class="readouts">
+            <div class="ro"><div class="k">Shock @ ride</div><div class="v" id="ro_slen">–</div></div>
+            <div class="ro"><div class="k">Stroke needed</div><div class="v" id="ro_sstroke">–</div></div>
+            <div class="ro"><div class="k">Motion ratio</div><div class="v" id="ro_smr">–</div></div>
+            <div class="ro"><div class="k">Static sag</div><div class="v" id="ro_ssag">–</div></div>
+          </div>
+          <div class="chips" id="su_chips"></div>
+        </div>
+        <div class="chartcard">
+          <h3>Shock length vs wheel travel</h3>
+          <p class="cap">Slope = motion ratio; the height of the line's span is your stroke. Curvature means a rising or falling rate.</p>
+          <svg id="su_chart" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DRIVESHAFT TAB ================= -->
+  <section id="tab-ds" hidden>
+    <div class="layout">
+      <div class="panel controls">
+        <div class="grp">
+          <h3>Diff output (inboard)</h3>
+          <div class="field"><label>X (lateral)</label><input type="number" id="ds_dx" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Y (fore/aft)</label><input type="number" id="ds_dy" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Z (height)</label><input type="number" id="ds_dz" step="1"><span class="u">mm</span></div>
+          <div class="hint">Where the driveshaft leaves the diff / gearbox. Fixed to the chassis.</div>
+        </div>
+        <div class="grp">
+          <h3>Hub centre (outboard)</h3>
+          <div class="field"><label>X (lateral)</label><input type="number" id="ds_hx" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Y (fore/aft)</label><input type="number" id="ds_hy" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Z (height)</label><input type="number" id="ds_hz" step="1"><span class="u">mm</span></div>
+          <div class="hint">Hub &amp; diff are entered with the <b>lower arm level</b> (θ=0) — the same reference you measure everything else at. The hub then rides with the suspension and swings with steering; the diff stays fixed to the chassis.</div>
+        </div>
+        <div class="grp">
+          <h3>Steering &amp; limit</h3>
+          <div class="field"><label>Steer lock ±</label><input type="number" id="ds_steer" step="1"><span class="u">deg</span></div>
+          <div class="field"><label>Max joint angle</label><input type="number" id="ds_cvmax" step="1"><span class="u">deg</span></div>
+          <div class="hint">Steer lock = how far the wheel turns each way at full lock. The Plunge and the Inboard/Outboard CV readouts scan the <b>whole travel × steer envelope</b> for the true worst case, whatever the sliders show. Printed dogbones bind / pop past ~35–45°; CVs allow more.</div>
+        </div>
+        <div class="slider">
+          <div class="row"><label for="ds_input">Wheel travel</label><span class="val" id="ds_inputv">0 mm</span></div>
+          <input type="range" id="ds_input" min="-1" max="1" step="0.001" value="0">
+          <div class="playrow"><button id="ds_centre">Rest</button><button id="ds_play">▶ Cycle</button></div>
+          <div class="row" style="margin-top:14px"><label for="ds_steerinput">Steering</label><span class="val" id="ds_steerinputv">0°</span></div>
+          <input type="range" id="ds_steerinput" min="-1" max="1" step="0.001" value="0">
+          <div class="playrow"><button id="ds_steercentre">Straight</button><button id="ds_steerplay">▶ Sweep</button></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel stage">
+          <svg class="viewport" id="ds_svg" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet" aria-label="Front view of the driveshaft"></svg>
+          <div class="readouts">
+            <div class="ro"><div class="k">Shaft @ ride</div><div class="v" id="ro_dslen">–</div></div>
+            <div class="ro"><div class="k">Plunge</div><div class="v" id="ro_dsplunge">–</div></div>
+            <div class="ro"><div class="k">Inboard CV</div><div class="v" id="ro_dscvin">–</div></div>
+            <div class="ro"><div class="k">Outboard CV</div><div class="v" id="ro_dscvout">–</div></div>
+          </div>
+          <div class="chips" id="ds_chips"></div>
+        </div>
+        <div class="chartcard">
+          <h3>CV angle vs wheel travel</h3>
+          <p class="cap">Inboard (diff) and outboard (hub) joint angles through the travel — solid = straight ahead, dashed = at full lock. Keep both under your joint's limit everywhere.</p>
+          <svg id="ds_chart" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block"></svg>
+          <div class="legend">
+            <span><i style="border-color:var(--accent)"></i>outboard (hub)</span>
+            <span><i style="border-color:var(--accent-2)"></i>inboard (diff)</span>
+            <span><i style="border-color:var(--muted);border-top-style:dashed"></i>at full lock</span>
+            <span><i style="border-color:var(--bad);border-top-style:dashed"></i>limit</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ALIGNMENT TAB ================= -->
+  <section id="tab-align" hidden>
+    <div class="layout">
+      <div class="panel controls">
+        <div class="grp">
+          <h3>Wheel &amp; axis</h3>
+          <div class="field"><label>Wheel radius</label><input type="number" id="al_rw" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Wheel centre X</label><input type="number" id="al_wcx" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Static camber</label><input type="number" id="al_camber" step="0.5"><span class="u">deg</span></div>
+          <div class="field"><label>Caster angle</label><input type="number" id="al_caster" step="0.5"><span class="u">deg</span></div>
+          <div class="hint">Kingpin lean (KPI) is read from your upright ball joints. Caster and camber are your alignment settings — the front-view geometry has no fore/aft, so caster is entered here.</div>
+        </div>
+        <div class="grp">
+          <h3>What these do</h3>
+          <div class="hint"><b>Scrub radius</b> — how far the tyre sits from the steering axis at the ground; sets how much bumps and throttle tug the steering. <b>Trail</b> — the caster's self-centring lever. <b>KPI</b> — axis lean that adds self-centring and jacks the car up slightly as you steer.</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel stage">
+          <svg class="viewport" id="al_svg" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet" aria-label="Front view of the steering axis, wheel and scrub radius"></svg>
+          <div class="readouts">
+            <div class="ro"><div class="k">Kingpin incl.</div><div class="v" id="ro_alkpi">–</div></div>
+            <div class="ro"><div class="k">Scrub radius</div><div class="v" id="ro_alscrub">–</div></div>
+            <div class="ro"><div class="k">Caster</div><div class="v" id="ro_alcaster">–</div></div>
+            <div class="ro"><div class="k">Trail</div><div class="v" id="ro_altrail">–</div></div>
+          </div>
+          <div class="chips" id="al_chips"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SERVO TAB ================= -->
+  <section id="tab-servo" hidden>
+    <div class="layout">
+      <div class="panel controls">
+        <div class="grp">
+          <h3>Servo</h3>
+          <div class="field"><label>Throw ±</label><input type="number" id="v_throw" step="1"><span class="u">deg</span></div>
+          <div class="field"><label>Horn length</label><input type="number" id="v_lh" step="0.5"><span class="u">mm</span></div>
+          <div class="field"><label>Servo offset</label><input type="number" id="v_reach" step="1"><span class="u">mm</span></div>
+          <div class="field"><label>Push angle</label><input type="number" id="v_pushangle" step="5"><span class="u">deg</span></div>
+          <div class="hint">The horn delivers a linear push = horn × sin(throw). Push angle sets its direction (0 = fore/aft) — mount the servo flat or on its side, it's the same push.</div>
+        </div>
+        <div class="grp">
+          <h3>Green bellcrank</h3>
+          <div class="field"><label>Input arm (push)</label><input type="number" id="v_ri" step="0.5"><span class="u">mm</span></div>
+          <div class="field"><label>Output arm (steer)</label><input type="number" id="v_ro" step="0.5"><span class="u">mm</span></div>
+          <div class="field"><label>Arm angle</label><input type="number" id="v_g" step="5"><span class="u">deg</span></div>
+          <div class="hint">Input arm takes the fore/aft push; output arm drives the steering left/right. Ratio = output ÷ input arm.</div>
+        </div>
+        <div class="slider">
+          <div class="row"><label for="v_input">Servo angle</label><span class="val" id="v_inputv">0°</span></div>
+          <input type="range" id="v_input" min="-1" max="1" step="0.001" value="0">
+          <div class="playrow">
+            <button id="v_centre">Centre</button>
+            <button id="v_play">▶ Sweep</button>
+          </div>
+        </div>
+        <div class="grp">
+          <h3>Target</h3>
+          <div class="hint" id="v_target">Steering needs ±– mm lateral.</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel stage">
+          <svg class="viewport" id="v_svg" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet" aria-label="Top view of the servo and bellcrank drive"></svg>
+          <div class="readouts">
+            <div class="ro"><div class="k">Output travel</div><div class="v" id="ro_out">–</div></div>
+            <div class="ro"><div class="k">Servo push</div><div class="v" id="ro_push">0<small>mm</small></div></div>
+            <div class="ro"><div class="k">Ratio out/push</div><div class="v" id="ro_ratio">–</div></div>
+            <div class="ro"><div class="k">Reaches lock</div><div class="v" id="ro_reach">–</div></div>
+          </div>
+          <div class="chips" id="v_chips"></div>
+        </div>
+        <div class="chartcard">
+          <h3>Resulting steering</h3>
+          <p class="cap">The Ackermann-tab linkage driven by this servo output — move the servo slider and watch the wheels turn.</p>
+          <label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);margin-bottom:10px;cursor:pointer"><input type="checkbox" id="v_rigid" style="accent-color:var(--accent);width:15px;height:15px"> Rigid pickup — steering follows the bellcrank arc in Y (no slot)</label>
+          <svg id="v_svg2" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet" style="width:100%;display:block"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3D TAB ================= -->
+  <section id="tab-3d" hidden>
+    <div class="layout">
+      <div class="panel controls">
+        <div class="grp">
+          <h3>Unify</h3>
+          <div class="playrow"><button id="d_solveall">⚙ Solve everything</button></div>
+          <div class="hint" id="d_solvehint">Sets the kingpin from your suspension, solves the arm angle for your target Ackermann %, flattens bump steer, and syncs the shared points so every tab agrees.</div>
+        </div>
+        <div class="grp">
+          <h3>Save / load settings</h3>
+          <div class="playrow">
+            <button id="d_export">Export ↧</button>
+            <button id="d_import">Apply pasted ↥</button>
+          </div>
+          <textarea id="d_json" spellcheck="false" placeholder="Exported settings appear here — copy to keep. Paste a saved set and Apply." style="width:100%;height:90px;margin-top:8px;box-sizing:border-box;font-family:var(--mono);font-size:10.5px;color:var(--ink);background:var(--inset);border:1px solid var(--line);border-radius:6px;padding:7px;resize:vertical"></textarea>
+          <div class="playrow" style="margin-top:6px">
+            <button id="d_save">Save to browser</button>
+            <button id="d_load">Load from browser</button>
+          </div>
+          <div class="hint" id="d_presethint">Export writes your current values to the box — copy them anywhere to lock them in. Paste a set back and Apply. Save/Load keeps one set in this browser.</div>
+        </div>
+        <div class="grp">
+          <h3>Consistency check</h3>
+          <div class="hint" id="d_check">–</div>
+        </div>
+        <div class="grp">
+          <h3>View</h3>
+          <div class="hint">Drag to rotate. This overlays the <b>Ackermann</b> (plan) geometry and the <b>Bump</b> (suspension) geometry in one frame, so the shared points — the kingpin and the track-rod outer ball — should sit on top of each other. Where they don't, the two tabs disagree.</div>
+          <div class="playrow" style="margin-top:8px"><button id="d_reset">Reset view</button></div>
+        </div>
+        <div class="grp">
+          <h3>Legend</h3>
+          <div class="hint" style="line-height:1.9">
+            <span style="color:var(--accent-2);font-weight:600">—</span> kingpin / upright &nbsp;
+            <span style="color:var(--link);font-weight:600">—</span> suspension links<br>
+            <span style="color:var(--rod);font-weight:600">—</span> track rod &nbsp;
+            <span style="color:var(--accent);font-weight:600">—</span> steering arm (Ackermann)
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel stage">
+          <svg class="viewport" id="d_svg" viewBox="0 0 640 500" preserveAspectRatio="xMidYMid meet" style="touch-action:none;cursor:grab" aria-label="3D view of the steering and suspension geometry together"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GUIDE TAB ================= -->
+  <section id="tab-guide" hidden>
+    <div class="panel guide">
+      <h2>How to read this</h2>
+      <p>Two things make a steering linkage "connect well": the wheels turn symmetrically with the right amount of Ackermann, and they <em>don't</em> steer themselves as the suspension moves. This tool covers both, one per tab.</p>
+
+      <h4>Steering &amp; Ackermann</h4>
+      <p>The single degree of freedom is the lateral travel of the two inner pickups — whether that's a rack sliding sideways or the output balls of a servo-saver bellcrank. Everything downstream (track rods → steering arms → wheels) follows from it.</p>
+      <ul>
+        <li><b>Arm angle sets Ackermann.</b> Angle the steering arms so their centre-lines, extended rearward, meet near the rear axle — that's ~100% Ackermann (inner wheel turns more than outer, so it scrubs less in a turn). The panel shows the ideal angle for your track and wheelbase.</li>
+        <li><b>Match the throw.</b> At centre, keep the track rod roughly perpendicular to the steering arm. If left and right locks differ a lot, or a link folds past straight, the plan view and the warning chips will flag it.</li>
+        <li><b>Servo sizing is geometry, not guesswork.</b> The horn only has to produce enough <em>symmetric</em> lateral travel at the pickups. Horn travel ≈ horn length × sin(throw); the sizing box back-solves the horn length you need.</li>
+      </ul>
+
+      <h4>Bump steer</h4>
+      <p>As the wheel moves up and down, the track-rod outer ball swings on an arc about its inner pivot. If that arc doesn't match the arc the upright wants to follow, the wheel toes in or out on its own — bump steer. It makes a car dartey over bumps and under braking.</p>
+      <ul>
+        <li><b>Aim the tie rod at the instant centre.</b> In front view, the upper and lower arm lines meet at the suspension's instant centre. The track rod should point at it, with its length tuned so the outer ball's arc tracks the upright. The tool draws the instant centre and reports the aim error.</li>
+        <li><b>Keep it flat around ride height.</b> A little bump steer at full droop is normal; what matters is the slope through the middle of the travel — read it off the curve and the "rate @ here" figure.</li>
+      </ul>
+
+      <h4>Recommended architecture for an IFS 4WD front</h4>
+      <p>Servo (mounted to the chassis) → short drag link → servo-saver bellcrank on a centre post → two track rods out to the steering arms. The bellcrank does the height transfer and the one-to-two split, so no single link runs at a bad angle. Always keep a servo saver in the load path.</p>
+      <p class="hint">A design aid for setting geometry — not a substitute for checking the built mechanism through its full travel in CAD.</p>
+    </div>
+  </section>
+
+  <div class="foot">Steering Studio · plan-view linkage &amp; 3D double-wishbone bump-steer solver · values are yours to edit</div>
+</div>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>
+"use strict";
+/* ---------- small math ---------- */
+const D2R=Math.PI/180, R2D=180/Math.PI;
+const v=(x,y)=>({x,y});
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y});
+const mul=(a,s)=>({x:a.x*s,y:a.y*s});
+const len=(a)=>Math.hypot(a.x,a.y);
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const rot=(p,a)=>({x:p.x*Math.cos(a)-p.y*Math.sin(a),y:p.x*Math.sin(a)+p.y*Math.cos(a)});
+function circInt(c0,r0,c1,r1){ // returns [] or [p] or [p,p]
+  const dx=c1.x-c0.x, dy=c1.y-c0.y, d=Math.hypot(dx,dy);
+  if(d>r0+r1+1e-9||d<Math.abs(r0-r1)-1e-9||d<1e-9) return [];
+  const a=(r0*r0-r1*r1+d*d)/(2*d);
+  const h2=r0*r0-a*a; const h=Math.sqrt(Math.max(0,h2));
+  const xm=c0.x+a*dx/d, ym=c0.y+a*dy/d;
+  const rx=-dy/d*h, ry=dx/d*h;
+  return [{x:xm+rx,y:ym+ry},{x:xm-rx,y:ym-ry}];
+}
+const pickNear=(sols,ref)=> sols.length? sols.reduce((b,p)=>dist(p,ref)<dist(b,ref)?p:b):null;
+const signedAng=(a,b)=>{ // signed angle from a to b (rad)
+  const d=Math.atan2(b.y,b.x)-Math.atan2(a.y,a.x);
+  return Math.atan2(Math.sin(d),Math.cos(d));
+};
+/* ---------- 3D ---------- */
+const V3=(x,y,z)=>({x,y,z});
+const s3=(a,b)=>V3(a.x-b.x,a.y-b.y,a.z-b.z);
+const a3=(a,b)=>V3(a.x+b.x,a.y+b.y,a.z+b.z);
+const m3=(a,s)=>V3(a.x*s,a.y*s,a.z*s);
+const dot3=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z;
+const cross3=(a,b)=>V3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
+const len3=a=>Math.sqrt(dot3(a,a));
+const norm3=a=>{const l=len3(a)||1;return V3(a.x/l,a.y/l,a.z/l);};
+function rodrigues(p,axis,ang){ // rotate vector p about unit axis by ang
+  const k=norm3(axis),c=Math.cos(ang),s=Math.sin(ang);
+  return a3(a3(m3(p,c),m3(cross3(k,p),s)),m3(k,dot3(k,p)*(1-c)));
+}
+function rotAtoB(p,a,b){ // rotate p by the rotation taking unit a to unit b
+  const A=norm3(a),B=norm3(b);const ax=cross3(A,B);const s=len3(ax);const c=dot3(A,B);
+  if(s<1e-9){ return c>0?p:m3(p,1); }
+  const ang=Math.atan2(s,c);
+  return rodrigues(p,ax,ang);
+}
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const fmt=(x,n=1)=>(x>=0?"":"")+x.toFixed(n);
+
+/* ---------- DOM helpers ---------- */
+const $=id=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function line(x1,y1,x2,y2,stroke,w,extra){return el("line",Object.assign({x1,y1,x2,y2,stroke,"stroke-width":w,"stroke-linecap":"round"},extra||{}));}
+function circ(cx,cy,r,fill,extra){return el("circle",Object.assign({cx,cy,r,fill},extra||{}));}
+function txt(x,y,s,fill,size,anchor){const t=el("text",{x,y,fill,"font-size":size||11,"text-anchor":anchor||"start"});t.textContent=s;return t;}
+function css(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+
+/* ---------- state ---------- */
+const S={ // steering defaults (mm/deg)
+  wb:250, tk:156.46, la:23, aa:20.81, ix:30.95, iy:-21.5, smax:10, input:0, servo:45, horn:11, kpoff:12.33
+};
+const B={ // bump defaults (front view x-lateral,z-up ; y fore/aft) — user's saved set
+  lix:25, liz:5, ll:41, warm:0, uix:25, spacing:30, ul:41, knuckleH:26,
+  uiz:35, lox:66, loz:5, uox:66, uoz:31,   // derived — recomputed by deriveSuspension()
+  tox:70.06, toz:20.5, toy:-21.5, tix:30.95, tiz:22.8, tiy:-21.5,
+  ride:-14, droop:0, bump:28, input:0
+};
+function deriveSuspension(){ // general 4-bar: place lower ball from its arm angle, then find the upper ball
+  B.uiz=B.liz+B.spacing;
+  const a=B.warm*D2R;
+  B.lox=B.lix+B.ll*Math.cos(a); B.loz=B.liz+B.ll*Math.sin(a);
+  const UI=v(B.uix,B.uiz), LO=v(B.lox,B.loz);
+  const sols=circInt(UI,B.ul,LO,B.knuckleH);        // upper ball = upper-arm reach ∩ knuckle height from lower ball
+  const UO = sols.length ? (sols[0].y>=sols[1].y?sols[0]:sols[1]) : v(B.lox, B.loz+B.knuckleH);
+  B.uox=UO.x; B.uoz=UO.y;
+  const d=$("b_derived"); if(d)d.innerHTML="Calculated: upper pivot ("+B.uix.toFixed(0)+", "+B.uiz.toFixed(0)+") · lower ball ("+B.lox.toFixed(0)+", "+B.loz.toFixed(0)+") · upper ball ("+B.uox.toFixed(0)+", "+B.uoz.toFixed(0)+").";
+}
+const Sids={wb:"s_wb",tk:"s_tk",la:"s_la",aa:"s_aa",ix:"s_ix",iy:"s_iy",smax:"s_smax",servo:"s_servo",horn:"s_horn",kpoff:"s_kpoff"};
+const Bids={lix:"b_lix",liz:"b_liz",ll:"b_ll",warm:"b_warm",uix:"b_uix",spacing:"b_spacing",ul:"b_ul",knuckleH:"b_knuckleH",tox:"b_tox",toz:"b_toz",toy:"b_toy",tix:"b_tix",tiz:"b_tiz",tiy:"b_tiy",ride:"b_ride",droop:"b_droop",bump:"b_bump"};
+const V={throw:45, lh:11, ri:-18, ro:21.5, g:90, reach:22, pushAngle:0, input:0}; // servo drive — user's saved set
+const Vids={throw:"v_throw",lh:"v_lh",ri:"v_ri",ro:"v_ro",g:"v_g",reach:"v_reach",pushAngle:"v_pushangle"};
+
+/* ================= STEERING MODEL ================= */
+// Solve one side. side=+1 right (x>0), -1 left. travel = lateral pickup shift (mm, +x).
+// returns {kp, sa0, sa, inner, delta} or null-ish with bind flag
+function steerSide(side, travel, prevDelta, dy){
+  const kp=v(side*S.tk/2, 0);
+  // neutral steering-arm ball: inboard & rearward
+  const sa0=add(kp, v(-side*S.la*Math.sin(S.aa*D2R), -S.la*Math.cos(S.aa*D2R)));
+  const inner0=v(side*S.ix, S.iy);
+  const Lt=dist(sa0, inner0);
+  const inner=v(inner0.x+travel, inner0.y + (dy||0));   // dy = fore/aft shift (rigid pickup)
+  const sols=circInt(kp,S.la, inner,Lt);
+  if(!sols.length) return {kp,sa0,inner,sa:null,delta:prevDelta||0,bind:true,Lt};
+  // reference for branch: rotate sa0 about kp by prevDelta
+  const ref= prevDelta!==undefined ? add(kp, rot(sub(sa0,kp),prevDelta)) : sa0;
+  const sa=pickNear(sols,ref);
+  const delta=signedAng(sub(sa0,kp), sub(sa,kp));
+  return {kp,sa0,inner,sa,delta,bind:false,Lt};
+}
+function steerAt(travel, seed, dy){
+  const R=steerSide(1,travel, seed?seed.R:0, dy);
+  const L=steerSide(-1,travel, seed?seed.L:0, dy);
+  return {R,L};
+}
+// wheel heading sign: define positive pickup travel -> turn (compute from delta).
+function wheelAngles(st){
+  // wheel steer angle = -delta about kingpin mapped to heading; use delta directly, sign consistent
+  return {r:st.R.delta*R2D, l:st.L.delta*R2D, rbind:st.R.bind, lbind:st.L.bind};
+}
+
+/* ================= BUMP MODEL (3D) ================= */
+// front view plane: (x lateral, z up). y fore/aft.
+// Given lower-arm angle theta (rad from +x), solve 4-bar -> LO,UO front view.
+function wishbonePose(theta){
+  const LI=v(B.lix,B.liz), UI=v(B.uix,B.uiz);
+  const LO=add(LI, v(B.ll*Math.cos(theta), B.ll*Math.sin(theta)));
+  // upright length from neutral
+  const dU=dist(v(B.lox,B.loz), v(B.uox,B.uoz));
+  const sols=circInt(UI,B.ul, LO,dU);
+  if(!sols.length) return null;
+  // pick UO nearest neutral upper ball orientation (outer/higher)
+  const uo0=v(B.uox,B.uoz);
+  const UO=pickNear(sols,uo0);
+  return {LI,UI,LO,UO,dU};
+}
+// neutral lower-arm angle
+function neutralTheta(){
+  const LI=v(B.lix,B.liz), LO=v(B.lox,B.loz);
+  return Math.atan2(LO.y-LI.y, LO.x-LI.x);
+}
+// Solve toe (bump steer) at a given pose. Returns {toeDeg, pose, O, valid}
+function bumpAt(theta0, theta, seedToe){
+  const p0=wishbonePose(theta0), p=wishbonePose(theta);
+  if(!p0||!p) return {valid:false};
+  const LO0=V3(p0.LO.x,0,p0.LO.y? p0.LO.y:p0.LO.y); // careful: front view uses .x,.y as x,z
+  // Note: pose returns points with .x=lateral, .y=height(z). map to 3D (x,0,z)
+  const to3=(pt)=>V3(pt.x,0,pt.y);
+  const LO3=to3(p.LO), UO3=to3(p.UO), LO03=to3(p0.LO), UO03=to3(p0.UO);
+  const O0=V3(B.tox,B.toy,B.toz);          // neutral track-rod outer ball (3D)
+  const TI=V3(B.tix,B.tiy,B.tiz);          // fixed inner
+  const Lt=len3(s3(O0,TI));
+  // carry O with upright, zero toe: rotate (O0-LO0) by rotation taking kingpin axis k0->k, translate to LO
+  const k0=s3(UO03,LO03), k=s3(UO3,LO3);
+  const Ocarry=a3(LO3, rotAtoB(s3(O0,LO03), k0, k));
+  // solve toe gamma about current kingpin axis k so that |O(gamma)-TI| = Lt
+  const f=(g)=>{ const O=a3(LO3, rodrigues(s3(Ocarry,LO3), k, g)); return len3(s3(O,TI))-Lt; };
+  // root find near seed
+  let g=seedToe||0;
+  let ok=false;
+  for(let i=0;i<40;i++){ const f0=f(g); const h=1e-4; const df=(f(g+h)-f0)/h; if(Math.abs(df)<1e-9)break; const step=f0/df; g-=clamp(step,-0.2,0.2); if(Math.abs(f0)<1e-6){ok=true;break;} }
+  if(!ok){ // bisection fallback
+    let lo=-0.6,hi=0.6,flo=f(lo);
+    for(let i=0;i<60;i++){const mid=(lo+hi)/2,fm=f(mid); if(flo*fm<=0){hi=mid;}else{lo=mid;flo=fm;} }
+    g=(lo+hi)/2;
+  }
+  const O=a3(LO3, rodrigues(s3(Ocarry,LO3), k, g));
+  return {valid:true, toeDeg:g*R2D, pose:p, O:{x:O.x,z:O.z,y:O.y}, TI:{x:TI.x,z:TI.z,y:TI.y}, gamma:g};
+}
+// instant centre (front view): intersection of lower arm line (LI-LO) and upper arm line (UI-UO)
+function instantCentre(p){
+  const lineInt=(a,b,c,d)=>{const x1=a.x,y1=a.y,x2=b.x,y2=b.y,x3=c.x,y3=c.y,x4=d.x,y4=d.y;
+    const den=(x1-x2)*(y3-y4)-(y1-y2)*(x3-x4); if(Math.abs(den)<1e-9)return null;
+    const t=((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4))/den; return v(x1+t*(x2-x1),y1+t*(y2-y1));};
+  return lineInt(p.LI,p.LO,p.UI,p.UO);
+}
+
+/* ================= VIEW FITTING ================= */
+function fitter(pts,W,Hh,pad){
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  pts.forEach(p=>{minx=Math.min(minx,p.x);maxx=Math.max(maxx,p.x);miny=Math.min(miny,p.y);maxy=Math.max(maxy,p.y);});
+  const w=maxx-minx||1,h=maxy-miny||1;
+  const sc=Math.min((W-2*pad)/w,(Hh-2*pad)/h);
+  const ox=(W-sc*w)/2-sc*minx, oy=(Hh-sc*h)/2-sc*miny;
+  // screen y flipped (world +y up)
+  return p=>({x:p.x*sc+ox, y:Hh-(p.y*sc+oy)});
+}
+
+/* ================= RENDER: STEERING ================= */
+let sSeed={R:0,L:0};
+function renderSteer(){
+  const svg=$("s_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=440,pad=48;
+  // fit using full-lock extremes (stable view independent of slider)
+  const ext=[];
+  [-S.smax,0,S.smax].forEach(t=>{const st=steerAt(t);[st.R,st.L].forEach(s=>{ext.push(s.kp,s.inner);if(s.sa)ext.push(s.sa);ext.push(s.sa0);});});
+  ext.push(v(0,S.iy),v(0, -S.wb*0)); // centreline anchor
+  // include wheel outlines
+  const wr=26, ww=10;
+  const w2s=fitter(ext,W,H,pad);
+
+  const travel=S.input*S.smax;
+  const st=steerAt(travel, sSeed);
+  sSeed={R:st.R.delta,L:st.L.delta};
+  const grid=css("--line-2"), muted=css("--muted"), accent=css("--accent"),
+        rodC=css("--rod"), linkC=css("--link"), wheelC=css("--wheel"), pivotC=css("--pivot"), ghost=css("--ghost"), faint=css("--faint");
+
+  // centreline
+  const c0=w2s(v(0,S.iy-S.la*1.2)), c1=w2s(v(0,S.tk*0.55));
+  svg.appendChild(line(c0.x,c0.y,c1.x,c1.y,grid,1,{"stroke-dasharray":"2 5"}));
+  // axle line
+  const aL=w2s(v(-S.tk/2,0)), aR=w2s(v(S.tk/2,0));
+  svg.appendChild(line(aL.x,aL.y,aR.x,aR.y,grid,1,{"stroke-dasharray":"2 5"}));
+
+  [st.R,st.L].forEach((s,idx)=>{
+    const side=idx===0?1:-1;
+    const kp=w2s(s.kp);
+    // wheel: rectangle centred at kingpin, rotated by steer angle. wheel axis along x, heading rotates.
+    const ang=s.delta; // rad
+    const dir=rot(v(0,1),ang); // wheel forward direction (before steer it's +y)... build wheel rectangle
+    const fwd=rot(v(0,1),ang), lat=rot(v(1,0),ang);
+    const corners=[add(add(s.kp,mul(fwd,wr)),mul(lat,ww)),
+                   add(sub(s.kp,mul(fwd,wr)),mul(lat,ww)),
+                   sub(sub(s.kp,mul(fwd,wr)),mul(lat,ww)),
+                   sub(add(s.kp,mul(fwd,wr)),mul(lat,ww))].map(w2s);
+    const poly=el("polygon",{points:corners.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:wheelC,"stroke-width":2.2,"stroke-linejoin":"round"});
+    svg.appendChild(poly);
+    // ghost neutral steering arm
+    const g_sa0=w2s(s.sa0);
+    svg.appendChild(line(kp.x,kp.y,g_sa0.x,g_sa0.y,ghost,2,{}));
+    // steering arm (kp -> sa)
+    if(s.sa){const sa=w2s(s.sa); svg.appendChild(line(kp.x,kp.y,sa.x,sa.y,linkC,3,{}));
+      // track rod sa -> inner
+      const inn=w2s(s.inner); svg.appendChild(line(sa.x,sa.y,inn.x,inn.y,rodC,3,{}));
+      svg.appendChild(circ(sa.x,sa.y,3.4,rodC,{stroke:css("--surface"),"stroke-width":1}));
+    }
+    // inner pickup ghost + current
+    const inn0=w2s(v(side*S.ix,S.iy)); const inn=w2s(s.inner);
+    svg.appendChild(circ(inn0.x,inn0.y,2.5,"none",{stroke:ghost,"stroke-width":1.5}));
+    svg.appendChild(circ(inn.x,inn.y,3.6,rodC,{stroke:css("--surface"),"stroke-width":1}));
+    // kingpin
+    svg.appendChild(circ(kp.x,kp.y,4,pivotC,{}));
+  });
+  // pickup connector bar (rack/bellcrank)
+  const iRc=w2s(st.R.inner), iLc=w2s(st.L.inner);
+  svg.appendChild(line(iRc.x,iRc.y,iLc.x,iLc.y,rodC,2,{"stroke-dasharray":"6 4",opacity:.7}));
+
+  // labels
+  svg.appendChild(txt(12,20,"PLAN VIEW — top",muted,11));
+  svg.appendChild(txt(12,H-14,"forward ↑",faint,10));
+
+  // readouts
+  const wa=wheelAngles(st);
+  $("ro_l").innerHTML=fmt(wa.l)+'<small>°</small>';
+  $("ro_r").innerHTML=fmt(wa.r)+'<small>°</small>';
+  // Ackermann % at current (if turning)
+  const inner=Math.max(Math.abs(wa.l),Math.abs(wa.r)), outer=Math.min(Math.abs(wa.l),Math.abs(wa.r));
+  let ackTxt="–", radTxt="–";
+  if(outer>1.5){
+    const di=inner*D2R, do_=outer*D2R;
+    const idealInner=Math.atan(1/ (1/Math.tan(do_) - S.tk/S.wb));
+    const pct=((di-do_)/((idealInner-do_)||1e-9))*100;
+    ackTxt=Math.round(pct)+'<small>%</small>';
+    const Rt=S.wb/Math.tan(do_)+S.tk/2;
+    radTxt=(Rt/1000).toFixed(2)+'<small> m</small>';
+  }
+  $("ro_ack").innerHTML=ackTxt; $("ro_rad").innerHTML=radTxt;
+
+  // chips / warnings
+  const chips=$("s_chips"); chips.innerHTML="";
+  function chip(cls,label){const d=document.createElement("span");d.className="chip "+cls;d.textContent=label;chips.appendChild(d);}
+  // symmetry at full lock
+  const stR=steerAt(S.smax), stL=steerAt(-S.smax);
+  const lockR=Math.abs(wheelAngles(stR).r), lockL=Math.abs(wheelAngles(stL).l);
+  const asym=Math.abs(lockR-lockL);
+  chip(asym<1.5?"good":asym<4?"warn":"bad", "L/R lock "+lockL.toFixed(0)+"° / "+lockR.toFixed(0)+"°");
+  // bind check across sweep
+  let bind=false; for(let i=-20;i<=20;i++){const s=steinTravel(i/20*S.smax); if(s) bind=bind||s;}
+  chip(bind?"bad":"good", bind?"link binds before full travel":"no bind through travel");
+  // transmission angle at lock (track rod vs steering arm)
+  const ta=transmissionAngle(S.smax);
+  chip(ta>35?"good":ta>25?"warn":"bad", "min transmission ∠ "+ta.toFixed(0)+"°");
+
+  // servo hint
+  const need=S.smax; const avail=S.horn*Math.sin(S.servo*D2R);
+  const recHorn=need/Math.max(1e-6,Math.sin(S.servo*D2R));
+  $("s_servohint").innerHTML = "Horn gives ±"+avail.toFixed(1)+" mm travel · need ±"+need.toFixed(1)+" mm → horn ≈ <b>"+recHorn.toFixed(1)+" mm</b>";
+  // ideal ackermann angle
+  $("s_ideal").textContent="Textbook arm angle (points at rear axle): "+(Math.atan((S.tk/2)/S.wb)*R2D).toFixed(1)+"° — note the achieved % below is usually lower.";
+  // track rod length (steering-arm ball to inner pickup): plan length + the Z gap = true ball-to-ball
+  (function(){ const saR=add(v(S.tk/2,0), v(-S.la*Math.sin(S.aa*D2R), -S.la*Math.cos(S.aa*D2R))); const innR=v(S.ix,S.iy);
+    const planLt=dist(saR,innR); const Lt3d=Math.hypot(planLt, B.toz-B.tiz);
+    const el2=$("s_trackrod"); if(el2)el2.innerHTML="Track rod ball-to-ball: <b>"+Lt3d.toFixed(1)+" mm</b> (plan "+planLt.toFixed(1)+", Z gap "+Math.abs(B.toz-B.tiz).toFixed(1)+")"; })();
+
+  renderAckChart();
+}
+function ackPctForAngle(aa){ // achieved Ackermann % at a given steering-arm angle
+  const old=S.aa; S.aa=aa; let seed={R:0,L:0}, found=null;
+  for(let i=0;i<=220;i++){const t=i/220*S.smax; const st=steerAt(t,seed); seed={R:st.R.delta,L:st.L.delta};
+    const wa=wheelAngles(st); const inner=Math.max(Math.abs(wa.l),Math.abs(wa.r)), outer=Math.min(Math.abs(wa.l),Math.abs(wa.r));
+    if(outer>=15 && !found) found={inner,outer};}
+  S.aa=old; if(!found) return null;
+  const do_=found.outer*D2R, ideal=Math.atan(1/(1/Math.tan(do_)-S.tk/S.wb))*R2D;
+  return ((found.inner-found.outer)/((ideal-found.outer)||1e-9))*100;
+}
+function solveArmAngle(target){ // bisection: % rises monotonically with arm angle
+  let lo=0, hi=45;
+  for(let i=0;i<44;i++){const mid=(lo+hi)/2; const pm=ackPctForAngle(mid); if(pm===null||pm<target) lo=mid; else hi=mid;}
+  return (lo+hi)/2;
+}
+function steinTravel(t){ // returns true if binds at travel t
+  const st=steerAt(t); return st.R.bind||st.L.bind;
+}
+function transmissionAngle(t){ // min angle between track rod and steering arm across both sides at travel t
+  const st=steerAt(t); let m=180;
+  [st.R,st.L].forEach(s=>{ if(!s.sa)return; const armV=sub(s.sa,s.kp), rodV=sub(s.inner,s.sa);
+    let a=Math.abs(signedAng(armV,rodV))*R2D; a=Math.min(a,180-a); m=Math.min(m,a);});
+  return m;
+}
+function renderAckChart(){
+  const svg=$("s_chart"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=300,L=48,Rp=16,T=14,Bp=40;
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),acc2=css("--accent-2"),faint=css("--faint"),ink=css("--ink");
+  // sweep -> arrays of (outer,inner) for a turn (take one direction)
+  const N=60; let maxA=0;
+  const pts=[];
+  let seed={R:0,L:0};
+  for(let i=0;i<=N;i++){const t=i/N*S.smax; const st=steerAt(t,seed); seed={R:st.R.delta,L:st.L.delta};
+    const wa=wheelAngles(st); const inner=Math.max(Math.abs(wa.l),Math.abs(wa.r)), outer=Math.min(Math.abs(wa.l),Math.abs(wa.r));
+    pts.push([outer,inner]); maxA=Math.max(maxA,inner,outer);}
+  maxA=Math.max(10,Math.ceil(maxA/5)*5);
+  const sx=o=>L+(o/maxA)*(W-L-Rp), sy=i=>H-Bp-(i/maxA)*(H-Bp-T);
+  // axes grid
+  for(let g=0;g<=maxA;g+=Math.max(5,Math.round(maxA/6/5)*5)){
+    const y=sy(g),x=sx(g);
+    svg.appendChild(line(L,y,W-Rp,y,grid,1)); svg.appendChild(line(x,T,x,H-Bp,grid,1,{opacity:.5}));
+    svg.appendChild(txt(L-8,y+3,g+"°",faint,10,"end"));
+    svg.appendChild(txt(x,H-Bp+16,g+"°",faint,10,"middle"));
+  }
+  svg.appendChild(txt((L+W-Rp)/2,H-6,"outer wheel angle",muted,11,"middle"));
+  const yl=txt(14,(T+H-Bp)/2,"inner wheel angle",muted,11,"middle"); yl.setAttribute("transform","rotate(-90 14 "+((T+H-Bp)/2)+")"); svg.appendChild(yl);
+  // parallel (y=x)
+  svg.appendChild(line(sx(0),sy(0),sx(maxA),sy(maxA),faint,1.5,{"stroke-dasharray":"2 4"}));
+  // ideal ackermann curve
+  let dpath="";
+  for(let i=0;i<=N;i++){const o=(i/N)*maxA*D2R; if(o<1e-4){dpath+=(i?"L":"M")+sx(0)+" "+sy(0);continue;}
+    const inner=Math.atan(1/(1/Math.tan(o)-S.tk/S.wb))*R2D; const oo=o*R2D;
+    if(inner>0&&inner<=maxA*1.2) dpath+=(i?"L":"M")+sx(oo)+" "+sy(inner);}
+  svg.appendChild(el("path",{d:dpath,fill:"none",stroke:acc2,"stroke-width":2,"stroke-dasharray":"6 4"}));
+  // your linkage
+  let yp=""; pts.forEach((p,i)=>{yp+=(i?"L":"M")+sx(p[0])+" "+sy(p[1]);});
+  svg.appendChild(el("path",{d:yp,fill:"none",stroke:accent,"stroke-width":2.6}));
+}
+
+/* ================= RENDER: BUMP ================= */
+let bSeed=0;
+function renderBump(){
+  const svg=$("b_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=440,pad=54;
+  const th0=neutralTheta();
+  const zAt=(th)=>B.liz+B.ll*Math.sin(th);
+  const thetaForTravel=(dz)=>{ let lo=th0-1.15,hi=th0+1.15; const target=zAt(th0)+dz;
+    for(let i=0;i<60;i++){const mid=(lo+hi)/2; if((zAt(mid)-target)*(zAt(lo)-target)<=0)hi=mid;else lo=mid;} return (lo+hi)/2; };
+  // static rest pose (where the wishbone actually sits) sets the toe reference
+  const staticTheta=thetaForTravel(B.ride);
+  const sres=bumpAt(th0,staticTheta,0); const refDeg=sres.valid?sres.toeDeg:0;
+  const fromRest=(B.input<0?B.input*B.droop:B.input*B.bump);
+  const dzAbs=B.ride+fromRest;
+  const theta=thetaForTravel(dzAbs);
+  const res=bumpAt(th0,theta,bSeed); bSeed=res.valid?res.gamma:0;
+  const p=res.valid?res.pose:wishbonePose(theta);
+  // fit across the real travel envelope (rest ± droop/bump)
+  const ext=[];
+  [-B.droop,-B.droop/2,0,B.bump/2,B.bump].forEach(f=>{const pp=wishbonePose(thetaForTravel(B.ride+f));if(pp){ext.push(pp.LI,pp.UI,pp.LO,pp.UO);}});
+  ext.push(v(B.tix,B.tiz),v(B.tox,B.toz));
+  const w2s=fitter(ext,W,H,pad);
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),rodC=css("--rod"),linkC=css("--link"),wheelC=css("--wheel"),pivotC=css("--pivot"),faint=css("--faint"),ghost=css("--ghost"),acc2=css("--accent-2");
+
+  if(!p){svg.appendChild(txt(W/2,H/2,"geometry does not assemble — check arm lengths",css("--bad"),12,"middle"));return;}
+  // ground/centre marks
+  svg.appendChild(txt(12,20,"FRONT VIEW — right corner",muted,11));
+  // arms
+  const LI=w2s(p.LI),UI=w2s(p.UI),LO=w2s(p.LO),UO=w2s(p.UO);
+  svg.appendChild(line(LI.x,LI.y,LO.x,LO.y,linkC,3,{}));
+  svg.appendChild(line(UI.x,UI.y,UO.x,UO.y,linkC,3,{}));
+  // upright
+  svg.appendChild(line(LO.x,LO.y,UO.x,UO.y,wheelC,3.4,{}));
+  // extend arm lines to instant centre
+  const ic=instantCentre(p);
+  if(ic){const icS=w2s(ic);
+    svg.appendChild(line(LO.x,LO.y,icS.x,icS.y,faint,1,{"stroke-dasharray":"3 4"}));
+    svg.appendChild(line(UO.x,UO.y,icS.x,icS.y,faint,1,{"stroke-dasharray":"3 4"}));
+    svg.appendChild(circ(icS.x,icS.y,3,"none",{stroke:acc2,"stroke-width":1.5}));
+    svg.appendChild(txt(icS.x+6,icS.y+3,"IC",acc2,10));
+  }
+  // wheel (simple) around upright midpoint
+  const mid=w2s(v((p.LO.x+p.UO.x)/2+18,(p.LO.y+p.UO.y)/2));
+  // tie rod (front view projection): inner fixed -> outer (moves)
+  const TI=w2s(v(B.tix,B.tiz));
+  const TOc=w2s(v(res.O.x,res.O.z));
+  svg.appendChild(line(TI.x,TI.y,TOc.x,TOc.y,rodC,3,{}));
+  svg.appendChild(circ(TI.x,TI.y,4,pivotC,{}));
+  svg.appendChild(circ(TOc.x,TOc.y,3.6,rodC,{stroke:css("--surface"),"stroke-width":1}));
+  // ghost neutral tie-rod outer
+  const TO0=w2s(v(B.tox,B.toz)); svg.appendChild(circ(TO0.x,TO0.y,2.5,"none",{stroke:ghost,"stroke-width":1.5}));
+  // pivots
+  svg.appendChild(circ(LI.x,LI.y,4,pivotC,{})); svg.appendChild(circ(UI.x,UI.y,4,pivotC,{}));
+  svg.appendChild(circ(LO.x,LO.y,3.4,linkC,{})); svg.appendChild(circ(UO.x,UO.y,3.4,linkC,{}));
+  svg.appendChild(txt(12,H-14,"↑ up   → outboard    ("+(fromRest>=0?"+":"")+fromRest.toFixed(0)+" mm from rest)",faint,10));
+
+  // readouts — toe referenced to the resting position
+  $("ro_toe").innerHTML=fmt(res.valid?(res.toeDeg-refDeg):0,2)+'<small>°</small>';
+  // rate at current travel (deg per mm)
+  const dzs=1.0; const t1=bumpAt(th0,thetaForTravel(dzAbs+dzs),res.gamma), t2=bumpAt(th0,thetaForTravel(dzAbs-dzs),res.gamma);
+  let rate="–"; if(t1.valid&&t2.valid){rate=((t1.toeDeg-t2.toeDeg)/(2*dzs)).toFixed(3)+"<small>°/mm</small>";}
+  $("ro_rate").innerHTML=rate;
+  $("ro_rc").innerHTML = ic? (ic.y).toFixed(0)+'<small> mm</small>' : "–";
+  // tie-rod aim: angle between tie-rod line (TI->TO) and IC->TO line
+  let aimTxt="–", aimDeg=0;
+  if(ic){const a=sub(v(res.O.x,res.O.z),v(B.tix,B.tiz)); const b=sub(v(res.O.x,res.O.z),ic);
+    aimDeg=Math.abs(signedAng(a,b))*R2D; aimDeg=Math.min(aimDeg,180-aimDeg); aimTxt=aimDeg.toFixed(0)+'<small>°</small>';}
+  $("ro_aim").innerHTML=aimTxt;
+
+  // chips
+  const chips=$("b_chips"); chips.innerHTML="";
+  function chip(cls,label){const d=document.createElement("span");d.className="chip "+cls;d.textContent=label;chips.appendChild(d);}
+  // toe swing (peak-to-peak, referenced to rest) over the real envelope
+  let mn=1e9,mx=-1e9,seed=0; const M=44;
+  for(let i=0;i<=M;i++){const f=-B.droop+(B.droop+B.bump)*i/M; const r=bumpAt(th0,thetaForTravel(B.ride+f),seed); if(r.valid){seed=r.gamma; const tt=r.toeDeg-refDeg; mn=Math.min(mn,tt);mx=Math.max(mx,tt);}}
+  const swing=(mx-mn);
+  chip(swing<0.4?"good":swing<1.2?"warn":"bad","toe swing "+swing.toFixed(2)+"° over travel");
+  // rate at rest (forward difference up from the resting stop)
+  const rr0=bumpAt(th0,thetaForTravel(B.ride),0), rr1=bumpAt(th0,thetaForTravel(B.ride+2),0);
+  const rrRest=(rr0.valid&&rr1.valid)?Math.abs((rr1.toeDeg-rr0.toeDeg)/2):9;
+  chip(rrRest<0.05?"good":rrRest<0.12?"warn":"bad","rate at rest "+rrRest.toFixed(3)+"°/mm");
+  chip(aimDeg<6?"good":aimDeg<14?"warn":"bad","tie-rod aim error "+aimDeg.toFixed(0)+"°");
+
+  renderBumpChart(th0,thetaForTravel,refDeg);
+}
+function renderBumpChart(th0,thetaForTravel,refDeg){
+  const svg=$("b_chart"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=300,L=52,Rp=16,T=14,Bp=40;
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),faint=css("--faint");
+  const span=(B.droop+B.bump)||1;
+  const N=56; const rows=[]; let mn=0,mx=0; let seed=0;
+  for(let i=0;i<=N;i++){const f=-B.droop+span*i/N; const r=bumpAt(th0,thetaForTravel(B.ride+f),seed); if(r.valid){seed=r.gamma; const tt=r.toeDeg-refDeg; rows.push([f,tt]); mn=Math.min(mn,tt);mx=Math.max(mx,tt);}}
+  const maxT=Math.max(0.5,Math.ceil(Math.max(Math.abs(mn),Math.abs(mx))*2)/2);
+  const sx=f=>L+((f+B.droop)/span)*(W-L-Rp);
+  const sy=t=>{const mid=(T+H-Bp)/2, half=(H-Bp-T)/2; return mid - (t/maxT)*half;};
+  for(let t=-maxT;t<=maxT+1e-6;t+=maxT/2){const y=sy(t); svg.appendChild(line(L,y,W-Rp,y,grid,1,{opacity:Math.abs(t)<1e-6?1:.6})); svg.appendChild(txt(L-8,y+3,(t>0?"+":"")+t.toFixed(1)+"°",faint,10,"end"));}
+  for(let i=0;i<=4;i++){const f=-B.droop+span*i/4; const x=sx(f); svg.appendChild(line(x,T,x,H-Bp,grid,1,{opacity:.4})); svg.appendChild(txt(x,H-Bp+16,(f>0?"+":"")+f.toFixed(0),faint,10,"middle"));}
+  svg.appendChild(txt((L+W-Rp)/2,H-6,"travel from rest (mm)   droop ← → bump",muted,11,"middle"));
+  let path=""; rows.forEach((r,i)=>{path+=(i?"L":"M")+sx(r[0])+" "+sy(r[1]);});
+  svg.appendChild(el("path",{d:path,fill:"none",stroke:accent,"stroke-width":2.6}));
+  const x0=sx(0); svg.appendChild(line(x0,T,x0,H-Bp,accent,1,{"stroke-dasharray":"2 3",opacity:.6}));
+  svg.appendChild(txt(x0,T-2,"rest",accent,9.5,"middle"));
+}
+// peak-to-peak toe (referenced to rest) over the real travel envelope — the thing to minimise
+function bumpSwing(){
+  const th0=neutralTheta();
+  const zAt=(th)=>B.liz+B.ll*Math.sin(th);
+  const t4t=(dz)=>{let lo=th0-1.15,hi=th0+1.15;const target=zAt(th0)+dz;for(let i=0;i<60;i++){const m=(lo+hi)/2;if((zAt(m)-target)*(zAt(lo)-target)<=0)hi=m;else lo=m;}return(lo+hi)/2;};
+  const sres=bumpAt(th0,t4t(B.ride),0); const ref=sres.valid?sres.toeDeg:0;
+  let mn=1e9,mx=-1e9,seed=0; const M=32;
+  for(let i=0;i<=M;i++){const f=-B.droop+(B.droop+B.bump)*i/M; const r=bumpAt(th0,t4t(B.ride+f),seed); if(!r.valid)return 1e9; seed=r.gamma; const tt=r.toeDeg-ref; mn=Math.min(mn,tt);mx=Math.max(mx,tt);}
+  return mx-mn;
+}
+// grid-search the chassis inner ball (X,Z) for the flattest curve
+function optimizeInnerBall(){
+  let best={x:B.tix,z:B.tiz,s:bumpSwing()};
+  [{r:12,step:1},{r:1.5,step:0.15}].forEach(p=>{ const cx=best.x,cz=best.z;
+    for(let dx=-p.r;dx<=p.r+1e-9;dx+=p.step)for(let dz=-p.r;dz<=p.r+1e-9;dz+=p.step){
+      B.tix=cx+dx; B.tiz=cz+dz; const s=bumpSwing(); if(s<best.s)best={x:B.tix,z:B.tiz,s};}
+  });
+  B.tix=best.x; B.tiz=best.z; return best;
+}
+
+/* ================= RENDER: SERVO DRIVE ================= */
+let vSeed=0;
+// Reusable plan-view steering drawing (used by the servo tab's "resulting steering").
+function drawSteeringPlan(svg, travel, dy){
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=300,pad=38, wr=22, ww=8;
+  const ext=[];
+  [-S.smax,0,S.smax].forEach(t=>{const s2=steerAt(t);[s2.R,s2.L].forEach(s=>{ext.push(s.kp,s.inner);if(s.sa)ext.push(s.sa);ext.push(s.sa0);});});
+  const w2s=fitter(ext,W,H,pad);
+  const st=steerAt(travel, undefined, dy||0);
+  const grid=css("--line-2"),rodC=css("--rod"),linkC=css("--link"),wheelC=css("--wheel"),pivotC=css("--pivot");
+  const c0=w2s(v(0,S.iy-S.la*1.2)),c1=w2s(v(0,S.tk*0.55));
+  svg.appendChild(line(c0.x,c0.y,c1.x,c1.y,grid,1,{"stroke-dasharray":"2 5"}));
+  const aL=w2s(v(-S.tk/2,0)),aR=w2s(v(S.tk/2,0));
+  svg.appendChild(line(aL.x,aL.y,aR.x,aR.y,grid,1,{"stroke-dasharray":"2 5"}));
+  [st.R,st.L].forEach((s)=>{
+    const kp=w2s(s.kp);const ang=s.delta;const fwd=rot(v(0,1),ang),lat=rot(v(1,0),ang);
+    const corners=[add(add(s.kp,mul(fwd,wr)),mul(lat,ww)),add(sub(s.kp,mul(fwd,wr)),mul(lat,ww)),sub(sub(s.kp,mul(fwd,wr)),mul(lat,ww)),sub(add(s.kp,mul(fwd,wr)),mul(lat,ww))].map(w2s);
+    svg.appendChild(el("polygon",{points:corners.map(p=>p.x+","+p.y).join(" "),fill:"none",stroke:wheelC,"stroke-width":2.2,"stroke-linejoin":"round"}));
+    if(s.sa){const sa=w2s(s.sa);svg.appendChild(line(kp.x,kp.y,sa.x,sa.y,linkC,3));const inn=w2s(s.inner);svg.appendChild(line(sa.x,sa.y,inn.x,inn.y,rodC,3));svg.appendChild(circ(sa.x,sa.y,3.2,rodC,{stroke:css("--surface"),"stroke-width":1}));}
+    const inn=w2s(s.inner);svg.appendChild(circ(inn.x,inn.y,3.4,rodC,{stroke:css("--surface"),"stroke-width":1}));
+    svg.appendChild(circ(kp.x,kp.y,3.6,pivotC,{}));
+  });
+  const iRc=w2s(st.R.inner),iLc=w2s(st.L.inner);
+  svg.appendChild(line(iRc.x,iRc.y,iLc.x,iLc.y,rodC,2,{"stroke-dasharray":"6 4",opacity:.7}));
+  return st;
+}
+function servoSolve(theta, seed){
+  const Pg=v(0,0);
+  const Bi0=v(-V.ri,0);
+  const pho=(180-V.g)*D2R; const Bo0=v(V.ro*Math.cos(pho), V.ro*Math.sin(pho));
+  const push=V.lh*Math.sin(theta);                       // linear travel the horn delivers
+  const a=V.pushAngle*D2R; const d=v(-Math.sin(a), Math.cos(a));  // push direction (0 = fore/aft)
+  const Ps=sub(Bi0, mul(d, V.reach));                    // servo body sits back along the push line
+  // solve bellcrank angle so the input ball's motion along the push line equals the push
+  const gf=be=>{const p=rot(Bi0,be); return (p.x-Bi0.x)*d.x+(p.y-Bi0.y)*d.y - push;};
+  let lo=-1.45,hi=1.45,fl=gf(lo),found=false;
+  for(let i=0;i<90;i++){const m=(lo+hi)/2,fm=gf(m); if(fl*fm<=0){hi=m;found=true;}else{lo=m;fl=fm;}}
+  if(!found) return {bind:true,push,Pg,Bi0,Bo0,Ps,Hb:Ps,d};
+  const beta=(lo+hi)/2;
+  const Bi=rot(Bi0,beta), Bo=rot(Bo0,beta);
+  return {Pg,Bi0,Bi,Bo0,Bo,Ps,Hb:Ps,d,beta,push,bind:false};
+}
+function servoSweep(){ let seed=0; const out=[]; const N=44;
+  for(let i=-N;i<=N;i++){const th=i/N*V.throw*D2R; const s=servoSolve(th,seed); if(!s.bind)seed=s.beta; out.push({th,bo:s.bind?null:s.Bo.x,s,bind:s.bind});}
+  return out; }
+function renderServo(){
+  const svg=$("v_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=440,pad=54;
+  const thr=V.throw*D2R;
+  const theta=V.input*thr;
+  const st=servoSolve(theta, vSeed); vSeed=st.bind?vSeed:st.beta;
+  const ext=[]; [-thr,0,thr].forEach(t=>{const s=servoSolve(t,0); ext.push(s.Pg,s.Ps,s.Hb,s.Bi0,s.Bo0); if(!s.bind)ext.push(s.Bi,s.Bo);});
+  const w2s=fitter(ext,W,H,pad);
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),rodC=css("--rod"),linkC=css("--link"),pivotC=css("--pivot"),faint=css("--faint"),ghost=css("--ghost"),acc2=css("--accent-2");
+  svg.appendChild(txt(12,20,"TOP VIEW — servo → green bellcrank → steering",muted,11));
+  svg.appendChild(txt(12,H-14,"forward ↑",faint,10));
+  const s0=servoSolve(0,0);
+  const Ps=w2s(st.Ps), Pg=w2s(st.Pg);
+  if(!st.bind){
+    const Bi=w2s(st.Bi), Bo=w2s(st.Bo), bo0=w2s(st.Bo0);
+    svg.appendChild(el("polygon",{points:[Pg,Bi,Bo].map(p=>p.x+","+p.y).join(" "),fill:acc2,opacity:.10,stroke:"none"}));
+    svg.appendChild(line(Ps.x,Ps.y,Bi.x,Bi.y,rodC,3));        // servo push (linear)
+    svg.appendChild(line(Pg.x,Pg.y,Bi.x,Bi.y,linkC,3.4));     // input arm
+    svg.appendChild(line(Pg.x,Pg.y,Bo.x,Bo.y,linkC,3.4));     // output arm
+    svg.appendChild(line(bo0.x,bo0.y,Bo.x,Bo.y,acc2,1.5,{"stroke-dasharray":"2 3"}));
+    svg.appendChild(circ(bo0.x,bo0.y,2.5,"none",{stroke:ghost,"stroke-width":1.5}));
+    svg.appendChild(circ(Bi.x,Bi.y,3.4,rodC,{stroke:css("--surface"),"stroke-width":1}));
+    svg.appendChild(circ(Bo.x,Bo.y,4,acc2,{stroke:css("--surface"),"stroke-width":1}));
+    svg.appendChild(txt(Bo.x+8,Bo.y+3,"→ steering",acc2,10));
+  } else { svg.appendChild(txt(W/2,H/2,"servo push exceeds input arm — shorten horn / lengthen input arm",css("--bad"),12,"middle")); }
+  svg.appendChild(el("rect",{x:Ps.x-11,y:Ps.y-7,width:22,height:14,rx:2,fill:"none",stroke:linkC,"stroke-width":2}));
+  svg.appendChild(txt(Ps.x,Ps.y+20,"servo",faint,10,"middle"));
+  svg.appendChild(circ(Pg.x,Pg.y,4,pivotC,{})); svg.appendChild(txt(Pg.x+7,Pg.y+3,"bellcrank",faint,10));
+
+  const sweep=servoSweep(); const atP=sweep[sweep.length-1], atM=sweep[0];
+  const bo0x=s0.Bo0.x, bo0y=s0.Bo0.y;
+  const plus=atP.bind?null:(atP.s.Bo.x-bo0x), minus=atM.bind?null:(atM.s.Bo.x-bo0x);
+  const push=V.lh*Math.sin(thr);
+  const A=plus==null?0:Math.abs(plus), Bm=minus==null?0:Math.abs(minus);
+  $("ro_out").innerHTML=(plus==null||minus==null)?"bind":("+"+plus.toFixed(1)+" / "+minus.toFixed(1)+'<small>mm</small>');
+  $("ro_push").innerHTML=push.toFixed(1)+'<small>mm</small>';
+  $("ro_ratio").innerHTML=push>0.05?((A+Bm)/(2*push)).toFixed(2)+"×":"–";
+  const need=S.smax, minSide=Math.min(A,Bm);
+  $("ro_reach").innerHTML=(plus==null||minus==null)?"–":(minSide>=need?"yes":"short");
+  $("v_target").innerHTML="Steering needs ±<b>"+need.toFixed(1)+" mm</b> lateral to hit full lock (set on the Steering tab).";
+  const chips=$("v_chips"); chips.innerHTML="";
+  function chip(cls,label){const d=document.createElement("span");d.className="chip "+cls;d.textContent=label;chips.appendChild(d);}
+  const asym=Math.abs(A-Bm);
+  chip(asym<0.5?"good":asym<1.5?"warn":"bad","output +"+A.toFixed(1)+" / −"+Bm.toFixed(1)+" mm");
+  chip(minSide>=need?"good":"bad", minSide>=need?"reaches ±"+need.toFixed(0)+" mm lock":"short of ±"+need.toFixed(0)+" mm — longer output arm / horn");
+  let mt=180; sweep.forEach(pp=>{ if(pp.bind)return; const s=pp.s; const arm=sub(s.Bi,s.Pg), rodv=sub(s.Hb,s.Bi); let a=Math.abs(signedAng(arm,rodv))*R2D; a=Math.min(a,180-a); mt=Math.min(mt,a);});
+  chip(mt>35?"good":mt>25?"warn":"bad","min transmission ∠ "+mt.toFixed(0)+"°");
+  // fore/aft (Y) sweep of the output ball
+  const dyP=atP.bind?0:(atP.s.Bo.y-bo0y), dyM=atM.bind?0:(atM.s.Bo.y-bo0y);
+  const yMax=Math.max(Math.abs(dyP),Math.abs(dyM));
+  const rigid = $("v_rigid") && $("v_rigid").checked;
+  chip(yMax<0.5?"good":yMax<2?"warn":"bad","output fore/aft ±"+yMax.toFixed(1)+" mm"+(rigid?" — fed to steering":" — slot, or tick rigid"));
+  // ---- drive the Ackermann geometry with the servo output & show the wheels turning ----
+  const curdx = st.bind?0:(st.Bo.x-bo0x), curdy = (rigid&&!st.bind)?(st.Bo.y-bo0y):0;
+  const steerSt = drawSteeringPlan($("v_svg2"), curdx, curdy);
+  const wa=wheelAngles(steerSt);
+  chip("","wheels now  L "+wa.l.toFixed(0)+"° / R "+wa.r.toFixed(0)+"°");
+  if(plus!=null&&minus!=null){
+    const wlP=wheelAngles(steerAt(plus,undefined,rigid?dyP:0)), wlM=wheelAngles(steerAt(minus,undefined,rigid?dyM:0));
+    const lockMax=Math.max(Math.abs(wlP.l),Math.abs(wlP.r),Math.abs(wlM.l),Math.abs(wlM.r));
+    const lockAsym=Math.abs(Math.max(Math.abs(wlP.l),Math.abs(wlP.r))-Math.max(Math.abs(wlM.l),Math.abs(wlM.r)));
+    chip(lockMax>=18?"good":"warn","max wheel lock ±"+lockMax.toFixed(0)+"°");
+    if(rigid) chip(lockAsym<1?"good":lockAsym<3?"warn":"bad","L/R lock asym "+lockAsym.toFixed(1)+"° (from Y motion)");
+  }
+}
+
+/* ================= RENDER: 3D COMBINED VIEW ================= */
+let view3d={az:-0.7, el:0.42};
+function model3D(){
+  const link=css("--link"), rod=css("--rod"), acc=css("--accent"), acc2=css("--accent-2");
+  const LO={x:B.lox,y:0,z:B.loz}, UO={x:B.uox,y:0,z:B.uoz}, LI={x:B.lix,y:0,z:B.liz}, UI={x:B.uix,y:0,z:B.uiz};
+  const TI={x:B.tix,y:B.tiy,z:B.tiz}, TO={x:B.tox,y:B.toy,z:B.toz};
+  const zA=B.toz;
+  const saX=S.tk/2 - S.la*Math.sin(S.aa*D2R), saY=-S.la*Math.cos(S.aa*D2R);
+  const sa={x:saX,y:saY,z:zA};
+  const pick={x:S.ix,y:S.iy,z:B.tiz};
+  const zk=(B.loz+B.uoz)/2; const kpS={x:S.tk/2,y:0,z:zk};
+  const segs=[
+    [LI,LO,link,3],[UI,UO,link,3],[LO,UO,acc2,3.6],[TI,TO,rod,3],
+    [{x:S.tk/2,y:0,z:B.loz},{x:S.tk/2,y:0,z:B.uoz},acc2,1.5,true], // steering kingpin (dashed)
+    [kpS,sa,acc,3],[sa,pick,rod,2.4,true]
+  ];
+  const pts=[[LO,link],[UO,link],[LI,link],[UI,link],[TI,rod],[TO,rod,"outer (bump)"],[sa,acc,"arm ball (Ackermann)"],[pick,rod,"inner pickup"]];
+  return {segs,pts,sa,TO,kpMid:(B.lox+B.uox)/2};
+}
+function proj3(p){ const az=view3d.az, el=view3d.el, cx=Math.cos(az),sx=Math.sin(az);
+  const x1=p.x*cx-p.y*sx, y1=p.x*sx+p.y*cx, z1=p.z;
+  const ce=Math.cos(el),se=Math.sin(el); const z2=y1*se+z1*ce;
+  return {x:x1, y:z2}; }
+function render3D(){
+  const svg=$("d_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=500,pad=54;
+  const m=model3D();
+  const all=[]; m.segs.forEach(s=>{all.push(s[0],s[1]);}); m.pts.forEach(p=>all.push(p[0]));
+  const pr=all.map(proj3);
+  let mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9;
+  pr.forEach(p=>{mnx=Math.min(mnx,p.x);mxx=Math.max(mxx,p.x);mny=Math.min(mny,p.y);mxy=Math.max(mxy,p.y);});
+  const sc=Math.min((W-2*pad)/((mxx-mnx)||1),(H-2*pad)/((mxy-mny)||1));
+  const ox=(W-sc*(mnx+mxx))/2, oy=(H+sc*(mny+mxy))/2;
+  const w2s=p=>{const q=proj3(p);return {x:q.x*sc+ox, y:oy-q.y*sc};};
+  m.segs.forEach(s=>{const a=w2s(s[0]),b=w2s(s[1]); const ln=line(a.x,a.y,b.x,b.y,s[2],s[3]||2); if(s[4])ln.setAttribute("stroke-dasharray","4 4"); svg.appendChild(ln);});
+  m.pts.forEach(p=>{const a=w2s(p[0]); svg.appendChild(circ(a.x,a.y,3.8,p[1],{stroke:css("--surface"),"stroke-width":1})); if(p[2])svg.appendChild(txt(a.x+7,a.y-4,p[2],css("--muted"),9.5));});
+  svg.appendChild(txt(12,20,"3D — steering + suspension (drag to rotate)",css("--muted"),11));
+  // consistency readout
+  const expKp=m.kpMid+S.kpoff, kpDX=S.tk/2-expKp, dX=m.sa.x-m.TO.x, ySign=(m.sa.y*m.TO.y<0);
+  const col=c=>c==="good"?css("--good"):c==="warn"?css("--warn"):css("--bad");
+  const kf=Math.abs(kpDX)<2?"good":Math.abs(kpDX)<6?"warn":"bad";
+  const of=Math.abs(dX)<2?"good":Math.abs(dX)<6?"warn":"bad";
+  $("d_check").innerHTML=
+    "<b style='color:"+col(kf)+"'>Kingpin X:</b> at "+(S.tk/2).toFixed(0)+"; wishbone ball "+m.kpMid.toFixed(0)+" + offset "+S.kpoff.toFixed(0)+" = "+expKp.toFixed(0)+" → Δ "+kpDX.toFixed(1)+" mm.<br><br>"+
+    "<b style='color:"+col(of)+"'>Outer ball X:</b> Ackermann "+m.sa.x.toFixed(1)+" vs bump "+m.TO.x.toFixed(1)+" → Δ "+dX.toFixed(1)+" mm"+(Math.abs(dX)>2?" — set bump outer X ≈ "+m.sa.x.toFixed(0):"")+".<br><br>"+
+    "<b>Fore/aft:</b> arm "+Math.abs(m.sa.y).toFixed(1)+" vs bump "+m.TO.y.toFixed(1)+(ySign?" (opposite sign — likely just a convention difference; magnitudes match).":".");
+}
+(function(){ const svg=$("d_svg"); if(!svg)return; let last=null;
+  const g=e=>e.touches?e.touches[0]:e;
+  const down=e=>{last={x:g(e).clientX,y:g(e).clientY};svg.style.cursor="grabbing"; if(e.cancelable)e.preventDefault();};
+  const move=e=>{if(!last)return; const cx=g(e).clientX, cy=g(e).clientY; view3d.az+=(cx-last.x)*0.01; view3d.el=Math.max(-1.4,Math.min(1.4,view3d.el+(cy-last.y)*0.01)); last={x:cx,y:cy}; render3D(); if(e.cancelable)e.preventDefault();};
+  const up=()=>{last=null;svg.style.cursor="grab";};
+  svg.addEventListener("mousedown",down); window.addEventListener("mousemove",move); window.addEventListener("mouseup",up);
+  svg.addEventListener("touchstart",down,{passive:false}); svg.addEventListener("touchmove",move,{passive:false}); svg.addEventListener("touchend",up);
+})();
+
+/* ================= RENDER: SUSPENSION / SHOCK ================= */
+const SUS={sm:30, sux:30, suz:52, spring:2.5, weight:400, sagT:30, input:0};
+const Susids={sm:"su_sm",sux:"su_sux",suz:"su_suz",spring:"su_spring",weight:"su_weight",sagT:"su_sagt"};
+function susT4T(dz){ const th0=neutralTheta(); const zAt=th=>B.liz+B.ll*Math.sin(th); let lo=th0-1.2,hi=th0+1.2,tg=zAt(th0)+dz; for(let i=0;i<60;i++){const m=(lo+hi)/2; if((zAt(m)-tg)*(zAt(lo)-tg)<=0)hi=m;else lo=m;} return (lo+hi)/2; }
+function shockAt(theta){ const LI=v(B.lix,B.liz); const SMl=add(LI,v(SUS.sm*Math.cos(theta),SUS.sm*Math.sin(theta))); const SU=v(SUS.sux,SUS.suz); return {SMl,SU,len:dist(SMl,SU)}; }
+function renderSus(){
+  const svg=$("su_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=440,pad=54;
+  const tot=(B.droop+B.bump)||1;
+  const fromRest=SUS.input<0?SUS.input*B.droop:SUS.input*B.bump;
+  const theta=susT4T(B.ride+fromRest);
+  const p=wishbonePose(theta);
+  // sweep for length curve, stroke, MR
+  const N=48,rows=[]; let Lmin=1e9,Lmax=-1e9;
+  for(let i=0;i<=N;i++){const f=-B.droop+tot*i/N;const s=shockAt(susT4T(B.ride+f));rows.push([f,s.len]);Lmin=Math.min(Lmin,s.len);Lmax=Math.max(Lmax,s.len);}
+  const Lride=shockAt(susT4T(B.ride)).len;
+  const Lbump=shockAt(susT4T(B.ride+B.bump)).len, Ldroop=shockAt(susT4T(B.ride-B.droop)).len;
+  const stroke=Math.abs(Ldroop-Lbump);
+  const eps=0.75, fHi=Math.min(B.bump,eps), fLo=Math.max(-B.droop,-eps);
+  const MR=Math.abs((shockAt(susT4T(B.ride+fLo)).len - shockAt(susT4T(B.ride+fHi)).len)/((fHi-fLo)||1));
+  let MRmin=1e9,MRmax=-1e9; for(let i=1;i<rows.length;i++){const mm=Math.abs((rows[i][1]-rows[i-1][1])/((rows[i][0]-rows[i-1][0])||1));MRmin=Math.min(MRmin,mm);MRmax=Math.max(MRmax,mm);}
+  const Ks=SUS.spring, Kw=Ks*MR*MR, Wn=SUS.weight/1000*9.81;
+  const sag=Kw>0?Wn/Kw:0, sagPct=sag/tot*100, m_kg=SUS.weight/1000;
+  const freq=Kw>0?(1/(2*Math.PI))*Math.sqrt(Kw*1000/m_kg):0;
+  const sagTgt=SUS.sagT/100*tot, KsNeed=(MR>0&&sagTgt>0)?(Wn/sagTgt)/(MR*MR):0;
+  // fit
+  const ext=[];[-B.droop,0,B.bump].forEach(f=>{const th=susT4T(B.ride+f);const pp=wishbonePose(th);const s=shockAt(th);if(pp){ext.push(pp.LI,pp.UI,pp.LO,pp.UO);}ext.push(s.SMl,s.SU);});
+  const w2s=fitter(ext,W,H,pad);
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),linkC=css("--link"),wheelC=css("--wheel"),pivotC=css("--pivot"),faint=css("--faint"),acc2=css("--accent-2");
+  svg.appendChild(txt(12,20,"FRONT VIEW — suspension + shock",muted,11));
+  svg.appendChild(txt(12,H-14,"↑ up   → outboard    ("+(fromRest>=0?"+":"")+fromRest.toFixed(0)+" mm)",faint,10));
+  if(p){
+    const LI=w2s(p.LI),UI=w2s(p.UI),LO=w2s(p.LO),UO=w2s(p.UO);
+    svg.appendChild(line(LI.x,LI.y,LO.x,LO.y,linkC,3)); svg.appendChild(line(UI.x,UI.y,UO.x,UO.y,linkC,3));
+    svg.appendChild(line(LO.x,LO.y,UO.x,UO.y,wheelC,3.4));
+    svg.appendChild(circ(LI.x,LI.y,4,pivotC,{})); svg.appendChild(circ(UI.x,UI.y,4,pivotC,{}));
+  }
+  const sk=shockAt(theta); const SMl=w2s(sk.SMl), SU=w2s(sk.SU);
+  // shock: body line + spring hint
+  svg.appendChild(line(SMl.x,SMl.y,SU.x,SU.y,accent,5,{"stroke-linecap":"round"}));
+  svg.appendChild(circ(SMl.x,SMl.y,4,accent,{stroke:css("--surface"),"stroke-width":1}));
+  svg.appendChild(circ(SU.x,SU.y,4,accent,{stroke:css("--surface"),"stroke-width":1}));
+  svg.appendChild(txt(SU.x+7,SU.y,"chassis",faint,9.5)); svg.appendChild(txt(SMl.x+7,SMl.y+10,"arm",faint,9.5));
+  svg.appendChild(txt((SMl.x+SU.x)/2+8,(SMl.y+SU.y)/2,sk.len.toFixed(1)+" mm",accent,10.5));
+  // readouts
+  $("ro_slen").innerHTML=Lride.toFixed(1)+'<small>mm</small>';
+  $("ro_sstroke").innerHTML=stroke.toFixed(1)+'<small>mm</small>';
+  $("ro_smr").innerHTML=MR.toFixed(2)+'<small>:1</small>';
+  $("ro_ssag").innerHTML=(Kw>0?sagPct.toFixed(0):"–")+'<small>%</small>';
+  // chips
+  const chips=$("su_chips"); chips.innerHTML="";
+  function chip(cls,label){const d=document.createElement("span");d.className="chip "+cls;d.textContent=label;chips.appendChild(d);}
+  chip("","shock: closed ≤ "+Lbump.toFixed(0)+", open ≥ "+Ldroop.toFixed(0)+" mm, stroke ≥ "+stroke.toFixed(0)+" mm");
+  chip(MRmax-MRmin<0.15?"good":"warn","motion ratio "+MR.toFixed(2)+" (range "+MRmin.toFixed(2)+"–"+MRmax.toFixed(2)+")");
+  if(B.droop<0.5){                 // rests on a hard droop stop — preloaded, no static sag
+    $("ro_ssag").innerHTML='on&nbsp;stop';
+    chip("warn","rests on droop stop — no static sag; hold-down preload ≈ corner weight "+Wn.toFixed(1)+" N ("+SUS.weight+" g)");
+    chip("","wheel rate "+Kw.toFixed(2)+" N/mm (spring × MR²) sets how it resists bump once a load lifts it off the stop");
+  } else {
+    chip(sagPct>=22&&sagPct<=38?"good":sagPct>=15&&sagPct<=45?"warn":"bad","sag "+sagPct.toFixed(0)+"% ("+sag.toFixed(1)+" mm) · ride freq "+freq.toFixed(1)+" Hz");
+    chip("","for "+SUS.sagT+"% sag use ≈ "+KsNeed.toFixed(2)+" N/mm spring (wheel rate "+Kw.toFixed(2)+" N/mm)");
+  }
+  renderSusChart(rows,Lmin,Lmax);
+}
+function renderSusChart(rows,Lmin,Lmax){
+  const svg=$("su_chart"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=300,L=54,Rp=16,T=14,Bp=40;
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),faint=css("--faint");
+  const span=(B.droop+B.bump)||1; const pad=Math.max(1,(Lmax-Lmin)*0.15); const lo=Lmin-pad, hi=Lmax+pad;
+  const sx=f=>L+((f+B.droop)/span)*(W-L-Rp);
+  const sy=Lv=>T+(hi-Lv)/((hi-lo)||1)*(H-Bp-T);
+  for(let i=0;i<=4;i++){const Lv=lo+(hi-lo)*i/4; const y=sy(Lv); svg.appendChild(line(L,y,W-Rp,y,grid,1)); svg.appendChild(txt(L-8,y+3,Lv.toFixed(0),faint,10,"end"));}
+  for(let i=0;i<=4;i++){const f=-B.droop+span*i/4; const x=sx(f); svg.appendChild(line(x,T,x,H-Bp,grid,1,{opacity:.4})); svg.appendChild(txt(x,H-Bp+16,(f>0?"+":"")+f.toFixed(0),faint,10,"middle"));}
+  svg.appendChild(txt((L+W-Rp)/2,H-6,"wheel travel (mm)   droop ← → bump",muted,11,"middle"));
+  svg.appendChild(txt(16,(T+H-Bp)/2,"shock length (mm)",muted,11,"middle")).setAttribute("transform","rotate(-90 16 "+((T+H-Bp)/2)+")");
+  let path=""; rows.forEach((r,i)=>{path+=(i?"L":"M")+sx(r[0])+" "+sy(r[1]);});
+  svg.appendChild(el("path",{d:path,fill:"none",stroke:accent,"stroke-width":2.6}));
+  const x0=sx(0); svg.appendChild(line(x0,T,x0,H-Bp,accent,1,{"stroke-dasharray":"2 3",opacity:.6})); svg.appendChild(txt(x0,T-2,"rest",accent,9.5,"middle"));
+}
+
+/* ================= RENDER: DRIVESHAFT / CV ================= */
+const DS={dx:18,dy:0,dz:20,hx:82,hy:0,hz:20,steer:20,cvmax:40,input:0,steerInput:0};
+const Dsids={dx:"ds_dx",dy:"ds_dy",dz:"ds_dz",hx:"ds_hx",hy:"ds_hy",hz:"ds_hz",steer:"ds_steer",cvmax:"ds_cvmax"};
+function dsT4T(dz){ const th0=neutralTheta(); const zAt=th=>B.liz+B.ll*Math.sin(th); let lo=th0-1.2,hi=th0+1.2,tg=zAt(th0)+dz; for(let i=0;i<60;i++){const m=(lo+hi)/2; if((zAt(m)-tg)*(zAt(lo)-tg)<=0)hi=m;else lo=m;} return (lo+hi)/2; }
+function dsAt(theta, steerDeg){
+  const p0=wishbonePose(0), p=wishbonePose(theta);   // hub/diff entered with the lower arm LEVEL (θ=0) — carry the hub from there
+  if(!p0||!p) return null;
+  const to3=q=>V3(q.x,0,q.y);
+  const LO0=to3(p0.LO),UO0=to3(p0.UO),LO=to3(p.LO),UO=to3(p.UO);
+  const k0=s3(UO0,LO0), k=s3(UO,LO);
+  const HUB0=V3(DS.hx,DS.hy,DS.hz), spin0=V3(1,0,0);
+  let hub=a3(LO, rotAtoB(s3(HUB0,LO0),k0,k));
+  let spin=rotAtoB(spin0,k0,k);
+  const g=(steerDeg||0)*D2R;
+  hub=a3(LO, rodrigues(s3(hub,LO),k,g));
+  spin=rodrigues(spin,k,g);
+  const diff=V3(DS.dx,DS.dy,DS.dz);
+  const shaft=s3(hub,diff), len=len3(shaft), sd=norm3(shaft);
+  const cvIn=Math.acos(clamp(dot3(sd,V3(1,0,0)),-1,1))*R2D;      // vs diff lateral axis
+  const cvOut=Math.acos(clamp(dot3(norm3(spin),sd),-1,1))*R2D;   // vs hub spin axis
+  return {hub,diff,spin,len,cvIn,cvOut,LO,UO,LI:to3(p.LI),UI:to3(p.UI)};
+}
+function renderDS(){
+  const svg=$("ds_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=440,pad=54; const tot=(B.droop+B.bump)||1;
+  const fromRest=DS.input<0?DS.input*B.droop:DS.input*B.bump;
+  const steerNow=(DS.steerInput||0)*DS.steer;                          // live steer from the slider
+  const cur=dsAt(dsT4T(B.ride+fromRest), steerNow);
+  // scan the whole travel × steer envelope for worst case, and build the two chart series
+  const N=48, rows0=[], rowsL=[]; let Lmin=1e9,Lmax=-1e9,cvInMax=0,cvOutMax=0;
+  const eat=m=>{if(!m)return;Lmin=Math.min(Lmin,m.len);Lmax=Math.max(Lmax,m.len);cvInMax=Math.max(cvInMax,m.cvIn);cvOutMax=Math.max(cvOutMax,m.cvOut);};
+  for(let i=0;i<=N;i++){
+    const f=-B.droop+tot*i/N, th=dsT4T(B.ride+f);
+    const m0=dsAt(th,0), mp=DS.steer?dsAt(th,DS.steer):m0, mn=DS.steer?dsAt(th,-DS.steer):m0;
+    if(m0) rows0.push([f,m0.cvIn,m0.cvOut,m0.len]);
+    if(mp&&mn) rowsL.push([f,Math.max(mp.cvIn,mn.cvIn),Math.max(mp.cvOut,mn.cvOut),mp.len]);
+    eat(m0); eat(mp); eat(mn);
+  }
+  const rideM=dsAt(dsT4T(B.ride),0); const Lride=rideM?rideM.len:0; const plunge=(Lmax>-1e8)?Lmax-Lmin:0;
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),acc2=css("--accent-2"),linkC=css("--link"),wheelC=css("--wheel"),faint=css("--faint");
+  const ext=[]; [-B.droop,0,B.bump].forEach(f=>{[0,steerNow].forEach(sg=>{const m=dsAt(dsT4T(B.ride+f),sg);if(m){ext.push(v(m.diff.x,m.diff.z),v(m.hub.x,m.hub.z),v(m.LO.x,m.LO.z),v(m.UO.x,m.UO.z),v(m.LI.x,m.LI.z),v(m.UI.x,m.UI.z));}});});
+  const w2s=fitter(ext,W,H,pad);
+  svg.appendChild(txt(12,20,"FRONT VIEW — driveshaft (steering swings hub fore/aft, shown as length)",muted,11));
+  svg.appendChild(txt(12,H-14,"↑ up   → outboard   ("+(fromRest>=0?"+":"")+fromRest.toFixed(0)+" mm, steer "+(steerNow>=0?"+":"")+steerNow.toFixed(0)+"°)",faint,10));
+  if(cur){
+    const LI=w2s(v(cur.LI.x,cur.LI.z)),UI=w2s(v(cur.UI.x,cur.UI.z)),LO=w2s(v(cur.LO.x,cur.LO.z)),UO=w2s(v(cur.UO.x,cur.UO.z));
+    svg.appendChild(line(LI.x,LI.y,LO.x,LO.y,linkC,3)); svg.appendChild(line(UI.x,UI.y,UO.x,UO.y,linkC,3)); svg.appendChild(line(LO.x,LO.y,UO.x,UO.y,wheelC,3.4));
+    const D=w2s(v(cur.diff.x,cur.diff.z)), Hb=w2s(v(cur.hub.x,cur.hub.z));
+    svg.appendChild(line(D.x,D.y,Hb.x,Hb.y,accent,4,{"stroke-linecap":"round"}));
+    svg.appendChild(circ(D.x,D.y,4.5,acc2,{stroke:css("--surface"),"stroke-width":1})); svg.appendChild(txt(D.x-6,D.y+16,"diff",faint,9.5,"middle"));
+    svg.appendChild(circ(Hb.x,Hb.y,4.5,accent,{stroke:css("--surface"),"stroke-width":1})); svg.appendChild(txt(Hb.x+7,Hb.y,"hub",faint,9.5));
+    svg.appendChild(txt((D.x+Hb.x)/2,(D.y+Hb.y)/2-6,cur.len.toFixed(1)+" mm · in "+cur.cvIn.toFixed(0)+"° / out "+cur.cvOut.toFixed(0)+"°",accent,10.5,"middle"));
+  }
+  $("ro_dslen").innerHTML=Lride.toFixed(1)+'<small>mm</small>';
+  $("ro_dsplunge").innerHTML=plunge.toFixed(1)+'<small>mm</small>';
+  $("ro_dscvin").innerHTML=cvInMax.toFixed(0)+'<small>° max</small>';
+  $("ro_dscvout").innerHTML=cvOutMax.toFixed(0)+'<small>° max</small>';
+  const chips=$("ds_chips"); chips.innerHTML="";
+  function chip(cls,label){const d=document.createElement("span");d.className="chip "+cls;d.textContent=label;chips.appendChild(d);}
+  const worst=Math.max(cvInMax,cvOutMax);
+  chip(worst<DS.cvmax*0.8?"good":worst<DS.cvmax?"warn":"bad","peak joint angle "+worst.toFixed(0)+"° vs "+DS.cvmax.toFixed(0)+"° limit (full travel & lock)");
+  chip("","plunge "+plunge.toFixed(1)+" mm over the envelope — cup depth / plunge travel must exceed this");
+  if(cur) chip("","now: "+(fromRest>=0?"+":"")+fromRest.toFixed(0)+" mm, "+(steerNow>=0?"+":"")+steerNow.toFixed(0)+"° → in "+cur.cvIn.toFixed(0)+"° / out "+cur.cvOut.toFixed(0)+"°");
+  renderDSChart(rows0,rowsL);
+}
+function renderDSChart(rows0,rowsL){
+  const svg=$("ds_chart"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=300,L=48,Rp=16,T=14,Bp=40;
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),acc2=css("--accent-2"),faint=css("--faint"),bad=css("--bad");
+  const span=(B.droop+B.bump)||1; let maxA=DS.cvmax; [rows0,rowsL].forEach(rs=>rs.forEach(r=>{maxA=Math.max(maxA,r[1],r[2]);})); maxA=Math.max(10,Math.ceil(maxA/5)*5);
+  const sx=f=>L+((f+B.droop)/span)*(W-L-Rp); const sy=a=>H-Bp-(a/maxA)*(H-Bp-T);
+  for(let a=0;a<=maxA;a+=Math.max(5,Math.round(maxA/6/5)*5)){const y=sy(a);svg.appendChild(line(L,y,W-Rp,y,grid,1));svg.appendChild(txt(L-8,y+3,a+"°",faint,10,"end"));}
+  for(let i=0;i<=4;i++){const f=-B.droop+span*i/4;const x=sx(f);svg.appendChild(line(x,T,x,H-Bp,grid,1,{opacity:.4}));svg.appendChild(txt(x,H-Bp+16,(f>0?"+":"")+f.toFixed(0),faint,10,"middle"));}
+  svg.appendChild(txt((L+W-Rp)/2,H-6,"wheel travel (mm)   droop ← → bump",muted,11,"middle"));
+  svg.appendChild(line(L,sy(DS.cvmax),W-Rp,sy(DS.cvmax),bad,1.5,{"stroke-dasharray":"5 4"}));
+  const plot=(rows,key,color,dash)=>{if(!rows.length)return;let d="";rows.forEach((r,i)=>{d+=(i?"L":"M")+sx(r[0])+" "+sy(r[key]);});svg.appendChild(el("path",Object.assign({d,fill:"none",stroke:color,"stroke-width":key===2?2.6:2.2},dash?{"stroke-dasharray":"6 4"}:{})));};
+  plot(rows0,2,accent,false); plot(rows0,1,acc2,false);       // straight ahead, solid
+  if(DS.steer){ plot(rowsL,2,accent,true); plot(rowsL,1,acc2,true); }  // full lock, dashed
+}
+
+/* ================= RENDER: ALIGNMENT (scrub / trail / KPI) ================= */
+const AL={rw:50, wcx:82, camber:-1, caster:6};
+const Alids={rw:"al_rw",wcx:"al_wcx",camber:"al_camber",caster:"al_caster"};
+function renderAlign(){
+  const svg=$("al_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const W=640,H=440,pad=54;
+  const p=wishbonePose(susT4T(B.ride))||wishbonePose(neutralTheta());
+  const LO=p?p.LO:v(B.lox,B.loz), UO=p?p.UO:v(B.uox,B.uoz);
+  const KPI=Math.atan2(LO.x-UO.x, UO.y-LO.y)*R2D;             // +ve = leans in at top
+  const dz=(UO.y-LO.y)||1e-6; const kgX=LO.x + (UO.x-LO.x)*((0-LO.y)/dz);   // steering axis at ground
+  const contactX=AL.wcx - AL.rw*Math.tan(AL.camber*D2R);       // tyre centre at ground (camber shift)
+  const scrub=contactX-kgX;                                    // +ve = tyre outboard of axis (positive scrub)
+  const trail=AL.rw*Math.tan(AL.caster*D2R);
+  // geometry points for drawing (front view x lateral, z up)
+  const wc=v(AL.wcx, AL.rw);                                   // wheel centre
+  const cam=AL.camber*D2R; const wdir=v(Math.sin(cam), Math.cos(cam)); // wheel plane up-direction (tilted by camber)
+  const wTop=v(wc.x+AL.rw*wdir.x, wc.y+AL.rw*wdir.y), wBot=v(wc.x-AL.rw*wdir.x, wc.y-AL.rw*wdir.y);
+  const kpTop=v(UO.x+(UO.x-LO.x)/dz*20, UO.y+20);              // extend axis a bit above
+  const ext=[LO,UO,v(kgX,0),wc,wTop,wBot,v(contactX,0),v(Math.min(kgX,contactX)-10,0),v(Math.max(kgX,contactX,wc.x+AL.rw)+10,0)];
+  const w2s=fitter(ext,W,H,pad);
+  const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),acc2=css("--accent-2"),wheelC=css("--wheel"),pivotC=css("--pivot"),faint=css("--faint"),good=css("--good");
+  // ground line
+  const gL=w2s(v(Math.min(kgX,contactX)-15,0)), gR=w2s(v(Math.max(kgX,contactX,wc.x+AL.rw)+15,0));
+  svg.appendChild(line(gL.x,gL.y,gR.x,gR.y,muted,2));
+  svg.appendChild(txt(12,20,"FRONT VIEW — steering axis, wheel & scrub",muted,11));
+  // wheel (tyre plane) + rim circle
+  const wt=w2s(wTop),wb=w2s(wBot),wcs=w2s(wc);
+  svg.appendChild(el("ellipse",{cx:wcs.x,cy:wcs.y,rx:Math.abs(w2s(v(wc.x+AL.rw,0)).x-wcs.x),ry:Math.abs(w2s(v(0,AL.rw)).y-w2s(v(0,0)).y),fill:"none",stroke:wheelC,"stroke-width":1.5,opacity:.5,transform:"rotate("+(-AL.camber)+" "+wcs.x+" "+wcs.y+")"}));
+  svg.appendChild(line(wt.x,wt.y,wb.x,wb.y,wheelC,3));
+  // kingpin axis (extended to ground, through balls)
+  const kpt=w2s(kpTop), kg=w2s(v(kgX,0));
+  svg.appendChild(line(kpt.x,kpt.y,kg.x,kg.y,acc2,2.5,{"stroke-dasharray":"6 4"}));
+  const lo=w2s(LO),uo=w2s(UO);
+  svg.appendChild(circ(lo.x,lo.y,4,pivotC,{})); svg.appendChild(circ(uo.x,uo.y,4,pivotC,{}));
+  svg.appendChild(circ(kg.x,kg.y,3.5,acc2,{}));
+  // contact point + scrub bracket
+  const cp=w2s(v(contactX,0));
+  svg.appendChild(circ(cp.x,cp.y,3.5,accent,{}));
+  const by=gL.y+16;
+  svg.appendChild(line(kg.x,by,cp.x,by,accent,1.5));
+  svg.appendChild(line(kg.x,by-4,kg.x,by+4,accent,1.5)); svg.appendChild(line(cp.x,by-4,cp.x,by+4,accent,1.5));
+  svg.appendChild(txt((kg.x+cp.x)/2,by+13,"scrub "+scrub.toFixed(0)+" mm",accent,10,"middle"));
+  svg.appendChild(txt(kg.x-4,kg.y-6,"axis",acc2,9.5,"end")); svg.appendChild(txt(cp.x+5,cp.y-6,"contact",accent,9.5));
+  // readouts
+  $("ro_alkpi").innerHTML=KPI.toFixed(1)+'<small>°</small>';
+  $("ro_alscrub").innerHTML=scrub.toFixed(1)+'<small>mm</small>';
+  $("ro_alcaster").innerHTML=AL.caster.toFixed(1)+'<small>°</small>';
+  $("ro_altrail").innerHTML=trail.toFixed(1)+'<small>mm</small>';
+  const chips=$("al_chips"); chips.innerHTML="";
+  function chip(cls,label){const d=document.createElement("span");d.className="chip "+cls;d.textContent=label;chips.appendChild(d);}
+  const asc=Math.abs(scrub);
+  chip(asc<8?"good":asc<20?"warn":"bad",(scrub>=0?"positive":"negative")+" scrub "+scrub.toFixed(0)+" mm — "+(asc<8?"light, calm steering":asc<20?"noticeable kickback over bumps/throttle":"large; steering will fight you"));
+  chip(trail>2&&trail<10?"good":"warn","trail "+trail.toFixed(1)+" mm — "+(trail<2?"little self-centring":trail>10?"heavy, very stable":"good self-centring"));
+  chip(Math.abs(KPI)<12?"good":"warn","KPI "+KPI.toFixed(1)+"° — axis "+(KPI>0.5?"leans in at top":KPI<-0.5?"leans out at top":"vertical"));
+}
+
+/* ================= UNIFIED SOLVE (ties tabs together) ================= */
+function syncAllInputs(){
+  const f=x=>{const r=Math.round(x*10)/10; return (Number.isInteger(r)?r:r.toFixed(1)).toString();};
+  for(const k in Sids){const e=$(Sids[k]); if(e)e.value=f(S[k]);}
+  for(const k in Bids){const e=$(Bids[k]); if(e)e.value=f(B[k]);}
+  for(const k in Vids){const e=$(Vids[k]); if(e)e.value=f(V[k]);}
+  for(const k in Susids){const e=$(Susids[k]); if(e)e.value=f(SUS[k]);}
+  for(const k in Dsids){const e=$(Dsids[k]); if(e)e.value=f(DS[k]);}
+  for(const k in Alids){const e=$(Alids[k]); if(e)e.value=f(AL[k]);}
+  const aa=$("s_aa"); if(aa)aa.value=f(S.aa);
+}
+function collectSettings(){
+  const o={ver:1,S:{},B:{},V:{},SUS:{}};
+  for(const k in Sids) o.S[k]=S[k];
+  for(const k in Bids) o.B[k]=B[k];
+  for(const k in Vids) o.V[k]=V[k];
+  for(const k in Susids) o.SUS[k]=SUS[k];
+  o.DS={}; for(const k in Dsids) o.DS[k]=DS[k];
+  o.AL={}; for(const k in Alids) o.AL[k]=AL[k];
+  return o;
+}
+function applySettings(o){
+  if(o&&o.S) for(const k in Sids) if(k in o.S && isFinite(o.S[k])) S[k]=+o.S[k];
+  if(o&&o.B) for(const k in Bids) if(k in o.B && isFinite(o.B[k])) B[k]=+o.B[k];
+  if(o&&o.V) for(const k in Vids) if(k in o.V && isFinite(o.V[k])) V[k]=+o.V[k];
+  if(o&&o.SUS) for(const k in Susids) if(k in o.SUS && isFinite(o.SUS[k])) SUS[k]=+o.SUS[k];
+  if(o&&o.DS) for(const k in Dsids) if(k in o.DS && isFinite(o.DS[k])) DS[k]=+o.DS[k];
+  if(o&&o.AL) for(const k in Alids) if(k in o.AL && isFinite(o.AL[k])) AL[k]=+o.AL[k];
+  deriveSuspension(); syncAllInputs();
+  sSeed={R:0,L:0}; bSeed=0;
+  renderSteer(); renderBump(); renderSus(); renderDS(); renderAlign(); renderServo(); render3D();
+}
+function optimizeInnerBallZ(){ // flatten by moving inner-ball Z only (keeps X fixed for clearance)
+  let best={z:B.tiz,s:bumpSwing()};
+  [{r:16,step:0.5},{r:1,step:0.05}].forEach(p=>{const cz=best.z; for(let dz=-p.r;dz<=p.r+1e-9;dz+=p.step){B.tiz=cz+dz;const s=bumpSwing();if(s<best.s)best={z:B.tiz,s};}});
+  B.tiz=best.z; return best;
+}
+function solveAll(){
+  deriveSuspension();
+  const ballX=(B.lox+B.uox)/2;
+  const target=parseFloat($("s_target").value)||90;
+  const hsIn=parseFloat($("s_targeths")&&$("s_targeths").value);
+  const useHS=isFinite(hsIn)&&hsIn>0;
+  const kpoff0=S.kpoff;
+  function runNatural(){                        // full flat + Ackermann solve at the current kingpin offset
+    const kpX=ballX + S.kpoff; S.tk=2*kpX;
+    for(let it=0; it<6; it++){
+      S.aa=solveArmAngle(target);
+      B.tox=kpX - S.la*Math.sin(S.aa*D2R);
+      B.toy=-S.la*Math.cos(S.aa*D2R);
+      B.tiy=B.toy;
+      optimizeInnerBall();
+      S.ix=Math.abs(B.tix); S.iy=B.tiy;
+    }
+    return kpX;
+  }
+  let kpX=runNatural();
+  if(useHS){                                    // slide the whole steering out (via kingpin offset) to the target ½-spacing — stays flat, arm unchanged
+    for(let k=0;k<10;k++){
+      const err=S.ix - hsIn;
+      if(Math.abs(err)<0.12) break;
+      S.kpoff -= 0.95*err;                       // pickup tracks the kingpin offset ~1:1
+      kpX=runNatural();
+    }
+  }
+  syncAllInputs();
+  sSeed={R:0,L:0}; bSeed=0;
+  const pct=ackPctForAngle(S.aa), swing=bumpSwing();
+  const kpNote=(useHS && Math.abs(S.kpoff-kpoff0)>0.2)?" · kingpin offset "+kpoff0.toFixed(1)+"→<b>"+S.kpoff.toFixed(1)+"</b> to reach ½-spacing "+S.ix.toFixed(1):"";
+  const hint="Kingpin track <b>"+(2*kpX).toFixed(0)+"</b> · arm angle <b>"+S.aa.toFixed(1)+"°</b> ("+Math.round(pct)+"% Ackermann) · ½-spacing "+S.ix.toFixed(1)+" · outer ball X "+B.tox.toFixed(1)+", Y "+B.toy.toFixed(1)+" · inner ball X "+B.tix.toFixed(1)+", Z "+B.tiz.toFixed(1)+" · toe swing "+swing.toFixed(2)+"°"+kpNote;
+  const dh=$("d_solvehint"); if(dh)dh.innerHTML=hint;
+  const sh=$("s_solvehint"); if(sh)sh.innerHTML="Tied together — "+hint;
+  renderSteer(); renderBump(); renderServo(); render3D();
+}
+
+/* ================= WIRING ================= */
+function bindInputs(obj,ids,onchange){
+  for(const k in ids){const inp=$(ids[k]); if(!inp)continue; inp.value=obj[k];
+    inp.addEventListener("input",()=>{const val=parseFloat(inp.value); if(!isNaN(val)){obj[k]=val; onchange();}});
+  }
+}
+bindInputs(S,Sids,()=>{sSeed={R:0,L:0};renderSteer(); if(!$("tab-servo").hidden)renderServo(); if(!$("tab-3d").hidden)render3D();});
+bindInputs(B,Bids,()=>{deriveSuspension();bSeed=0;renderBump(); if(!$("tab-3d").hidden)render3D();});
+$("d_reset").addEventListener("click",()=>{view3d.az=-0.7;view3d.el=0.42;render3D();});
+$("d_solveall").addEventListener("click",solveAll);
+$("s_solveall").addEventListener("click",solveAll);
+$("d_export").addEventListener("click",()=>{const t=JSON.stringify(collectSettings());$("d_json").value=t;let copied=false;try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);copied=true;}}catch(e){}$("d_presethint").textContent=copied?"Written to the box and copied to clipboard — paste it somewhere safe.":"Written to the box — select all and copy to keep it.";});
+$("d_import").addEventListener("click",()=>{try{applySettings(JSON.parse($("d_json").value));$("d_presethint").textContent="Applied and re-rendered every tab.";}catch(e){$("d_presethint").textContent="Couldn't read that — paste the exact exported text.";}});
+$("d_save").addEventListener("click",()=>{try{localStorage.setItem("ss_preset",JSON.stringify(collectSettings()));$("d_presethint").textContent="Saved to this browser.";}catch(e){$("d_presethint").textContent="This browser won't let the page save — use Export instead.";}});
+$("d_load").addEventListener("click",()=>{try{const t=localStorage.getItem("ss_preset");if(t){$("d_json").value=t;applySettings(JSON.parse(t));$("d_presethint").textContent="Loaded your saved set.";}else{$("d_presethint").textContent="Nothing saved in this browser yet — Save first.";}}catch(e){$("d_presethint").textContent="Couldn't load from this browser — use Apply pasted instead.";}});
+bindInputs(V,Vids,()=>{vSeed=0;renderServo();});
+$("v_input").addEventListener("input",e=>{V.input=parseFloat(e.target.value);$("v_inputv").textContent=(V.input*V.throw).toFixed(0)+"°";renderServo();});
+$("v_centre").addEventListener("click",()=>{V.input=0;$("v_input").value=0;$("v_inputv").textContent="0°";vSeed=0;renderServo();});
+$("v_rigid").addEventListener("change",renderServo);
+bindInputs(SUS,Susids,()=>renderSus());
+$("su_input").addEventListener("input",e=>{SUS.input=parseFloat(e.target.value);const fr=SUS.input<0?SUS.input*B.droop:SUS.input*B.bump;$("su_inputv").textContent=(fr>=0?"+":"")+fr.toFixed(0)+" mm";renderSus();});
+$("su_centre").addEventListener("click",()=>{SUS.input=0;$("su_input").value=0;$("su_inputv").textContent="0 mm";renderSus();});
+let suAnim=null;
+$("su_play").addEventListener("click",()=>{ if(suAnim){cancelAnimationFrame(suAnim);suAnim=null;$("su_play").textContent="▶ Cycle";return;} $("su_play").textContent="■ Stop"; const t0=performance.now(); const step=(t)=>{const ph=Math.sin((t-t0)/1100); SUS.input=ph; $("su_input").value=ph; const fr=ph<0?ph*B.droop:ph*B.bump; $("su_inputv").textContent=(fr>=0?"+":"")+fr.toFixed(0)+" mm"; renderSus(); suAnim=requestAnimationFrame(step);}; suAnim=requestAnimationFrame(step); });
+bindInputs(DS,Dsids,()=>renderDS());
+bindInputs(AL,Alids,()=>renderAlign());
+$("ds_input").addEventListener("input",e=>{DS.input=parseFloat(e.target.value);const fr=DS.input<0?DS.input*B.droop:DS.input*B.bump;$("ds_inputv").textContent=(fr>=0?"+":"")+fr.toFixed(0)+" mm";renderDS();});
+$("ds_centre").addEventListener("click",()=>{DS.input=0;$("ds_input").value=0;$("ds_inputv").textContent="0 mm";renderDS();});
+let dsAnim=null;
+$("ds_play").addEventListener("click",()=>{ if(dsAnim){cancelAnimationFrame(dsAnim);dsAnim=null;$("ds_play").textContent="▶ Cycle";return;} $("ds_play").textContent="■ Stop"; const t0=performance.now(); const step=(t)=>{const ph=Math.sin((t-t0)/1100); DS.input=ph; $("ds_input").value=ph; const fr=ph<0?ph*B.droop:ph*B.bump; $("ds_inputv").textContent=(fr>=0?"+":"")+fr.toFixed(0)+" mm"; renderDS(); dsAnim=requestAnimationFrame(step);}; dsAnim=requestAnimationFrame(step); });
+$("ds_steerinput").addEventListener("input",e=>{DS.steerInput=parseFloat(e.target.value);const sg=DS.steerInput*DS.steer;$("ds_steerinputv").textContent=(sg>=0?"+":"")+sg.toFixed(0)+"°";renderDS();});
+$("ds_steercentre").addEventListener("click",()=>{DS.steerInput=0;$("ds_steerinput").value=0;$("ds_steerinputv").textContent="0°";renderDS();});
+let dsSteerAnim=null;
+$("ds_steerplay").addEventListener("click",()=>{ if(dsSteerAnim){cancelAnimationFrame(dsSteerAnim);dsSteerAnim=null;$("ds_steerplay").textContent="▶ Sweep";return;} $("ds_steerplay").textContent="■ Stop"; const t0=performance.now(); const step=(t)=>{const ph=Math.sin((t-t0)/1000); DS.steerInput=ph; $("ds_steerinput").value=ph; const sg=ph*DS.steer; $("ds_steerinputv").textContent=(sg>=0?"+":"")+sg.toFixed(0)+"°"; renderDS(); dsSteerAnim=requestAnimationFrame(step);}; dsSteerAnim=requestAnimationFrame(step); });
+let vAnim=null;
+$("v_play").addEventListener("click",()=>{ if(vAnim){cancelAnimationFrame(vAnim);vAnim=null;$("v_play").textContent="▶ Sweep";return;} $("v_play").textContent="■ Stop"; const t0=performance.now(); const step=(t)=>{const ph=Math.sin((t-t0)/900); V.input=ph; $("v_input").value=ph; $("v_inputv").textContent=(ph*V.throw).toFixed(0)+"°"; renderServo(); vAnim=requestAnimationFrame(step);}; vAnim=requestAnimationFrame(step); });
+$("s_input").addEventListener("input",e=>{S.input=parseFloat(e.target.value);$("s_inputv").textContent=(S.input*S.smax).toFixed(1)+" mm";renderSteer();});
+function bFR(){return B.input<0?B.input*B.droop:B.input*B.bump;}
+$("b_input").addEventListener("input",e=>{B.input=parseFloat(e.target.value);const f=bFR();$("b_inputv").textContent=(f>=0?"+":"")+f.toFixed(0)+" mm";renderBump();});
+$("s_centre").addEventListener("click",()=>{S.input=0;$("s_input").value=0;$("s_inputv").textContent="0.0 mm";sSeed={R:0,L:0};renderSteer();});
+$("b_centre").addEventListener("click",()=>{B.input=0;$("b_input").value=0;$("b_inputv").textContent="0 mm";bSeed=0;renderBump();});
+$("b_flatten").addEventListener("click",()=>{
+  const best=optimizeInnerBall();
+  $("b_tix").value=best.x.toFixed(1); $("b_tiz").value=best.z.toFixed(1);
+  $("b_flathint").innerHTML="Inner ball → X <b>"+best.x.toFixed(1)+"</b>, Z <b>"+best.z.toFixed(1)+"</b> mm · toe swing "+best.s.toFixed(2)+"° over travel";
+  bSeed=0; renderBump();
+});
+$("s_solve").addEventListener("click",()=>{const target=parseFloat($("s_target").value);if(isNaN(target))return;const aa=solveArmAngle(target);S.aa=aa;$("s_aa").value=aa.toFixed(1);$("s_solvehint").innerHTML="For "+target+"% Ackermann → arm angle <b>"+aa.toFixed(1)+"°</b> (applied)";sSeed={R:0,L:0};renderSteer();});
+
+// sweeps
+let sAnim=null,bAnim=null;
+function toggleSweep(which){
+  if(which==="s"){ if(sAnim){cancelAnimationFrame(sAnim);sAnim=null;$("s_play").textContent="▶ Sweep";return;}
+    $("s_play").textContent="■ Stop"; const t0=performance.now();
+    const step=(t)=>{const ph=Math.sin((t-t0)/900); S.input=ph; $("s_input").value=ph; $("s_inputv").textContent=(ph*S.smax).toFixed(1)+" mm"; renderSteer(); sAnim=requestAnimationFrame(step);}; sAnim=requestAnimationFrame(step);
+  } else { if(bAnim){cancelAnimationFrame(bAnim);bAnim=null;$("b_play").textContent="▶ Cycle";return;}
+    $("b_play").textContent="■ Stop"; const t0=performance.now();
+    const step=(t)=>{const ph=Math.sin((t-t0)/1100); B.input=ph; $("b_input").value=ph; const f=bFR(); $("b_inputv").textContent=(f>=0?"+":"")+f.toFixed(0)+" mm"; renderBump(); bAnim=requestAnimationFrame(step);}; bAnim=requestAnimationFrame(step);
+  }
+}
+$("s_play").addEventListener("click",()=>toggleSweep("s"));
+$("b_play").addEventListener("click",()=>toggleSweep("b"));
+
+// tabs
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected","false"));
+    tab.setAttribute("aria-selected","true");
+    const name=tab.dataset.tab;
+    $("tab-steer").hidden=name!=="steer"; $("tab-bump").hidden=name!=="bump"; $("tab-sus").hidden=name!=="sus"; $("tab-ds").hidden=name!=="ds"; $("tab-align").hidden=name!=="align"; $("tab-servo").hidden=name!=="servo"; $("tab-3d").hidden=name!=="3d"; $("tab-guide").hidden=name!=="guide";
+    if(name==="steer")renderSteer(); if(name==="bump")renderBump(); if(name==="sus")renderSus(); if(name==="ds")renderDS(); if(name==="align")renderAlign(); if(name==="servo")renderServo(); if(name==="3d")render3D();
+  });
+});
+
+// theme toggle (auto -> dark -> light -> auto)
+let themeState=0; const states=[null,"dark","light"];
+try{const saved=localStorage.getItem("ss_theme"); if(saved){themeState=states.indexOf(saved); if(themeState<0)themeState=0;}}catch(e){}
+function applyTheme(){const s=states[themeState]; if(s)document.documentElement.setAttribute("data-theme",s); else document.documentElement.removeAttribute("data-theme"); try{localStorage.setItem("ss_theme",s||"auto");}catch(e){}}
+applyTheme();
+$("theme").addEventListener("click",()=>{themeState=(themeState+1)%3;applyTheme(); if(!$("tab-steer").hidden)renderSteer(); if(!$("tab-bump").hidden)renderBump();});
+
+// init
+$("s_inputv").textContent="0.0 mm";
+deriveSuspension();
+renderSteer();
+renderBump();
+renderSus();
+renderDS();
+renderAlign();
+renderServo();
+render3D();
+</script>
