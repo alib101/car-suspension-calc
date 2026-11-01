@@ -5,7 +5,7 @@
   --ink:#19212b; --muted:#5b6773; --faint:#8b96a2; --line:#d3dae1; --line-2:#e4e9ee;
   --accent:#cf7318; --accent-2:#158a86; --accent-soft:#f6e6d3;
   --good:#2f9457; --warn:#c9820c; --bad:#cf4436;
-  --wheel:#6b7885; --link:#2f3944; --rod:#c07c2a; --pivot:#3b4653; --ghost:#b9c3cc;
+  --wheel:#6b7885; --link:#2f3944; --rod:#c07c2a; --pivot:#3b4653; --ghost:#b9c3cc; --dim:#2563eb;
   --shadow:0 1px 2px rgba(20,30,40,.06),0 6px 20px rgba(20,30,40,.06);
   --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
   --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
@@ -15,7 +15,7 @@
   --ink:#e5ebf1; --muted:#93a0ac; --faint:#67727e; --line:#2b343f; --line-2:#232c35;
   --accent:#eda23e; --accent-2:#3bb6b0; --accent-soft:#33291a;
   --good:#3fa96a; --warn:#d99a2b; --bad:#e05a4c;
-  --wheel:#8492a0; --link:#c4cdd6; --rod:#eda23e; --pivot:#aeb9c4; --ghost:#3a444f;
+  --wheel:#8492a0; --link:#c4cdd6; --rod:#eda23e; --pivot:#aeb9c4; --ghost:#3a444f; --dim:#6ea8fe;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
 }}
 :root[data-theme="dark"]{
@@ -23,7 +23,7 @@
   --ink:#e5ebf1; --muted:#93a0ac; --faint:#67727e; --line:#2b343f; --line-2:#232c35;
   --accent:#eda23e; --accent-2:#3bb6b0; --accent-soft:#33291a;
   --good:#3fa96a; --warn:#d99a2b; --bad:#e05a4c;
-  --wheel:#8492a0; --link:#c4cdd6; --rod:#eda23e; --pivot:#aeb9c4; --ghost:#3a444f;
+  --wheel:#8492a0; --link:#c4cdd6; --rod:#eda23e; --pivot:#aeb9c4; --ghost:#3a444f; --dim:#6ea8fe;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
 }
 *{box-sizing:border-box}
@@ -715,8 +715,69 @@ function fitter(pts,W,Hh,pad){
   return p=>({x:p.x*sc+ox, y:Hh-(p.y*sc+oy)});
 }
 
+/* ================= DIMENSION ARROWS ================= */
+// DIM = the input id whose dimension is highlighted on the diagram. Each render asks its dims*() for a
+// list of primitives in that view's world coords, folds their points into the fit, then draws them on top.
+//   al: aligned arrow a→b (ea/eb = extension-line anchors, off = px offset)   h / v: horizontal / vertical arrow, off = px
+//   ang: arc at c from direction d0 to d1 (r px)   ln: dashed reference line   cl / gl: centreline / ground   note: caption
+let DIM=null;
+const mmT=x=>(+x).toFixed(1).replace(/\.0$/,"")+" mm", dgT=x=>(+x).toFixed(1).replace(/\.0$/,"")+"°";
+function dimPts(prims){ const o=[]; prims.forEach(P=>{["a","b","c","ea","eb"].forEach(k=>{if(P[k])o.push(P[k]);});
+  if(P.t==="cl")o.push(v(0,P.y)); if(P.t==="gl")o.push(v(P.x,0)); }); return o; }
+function drawDims(svg,w2s,prims){
+  if(!prims||!prims.length)return;
+  const C=css("--dim"), bg=css("--inset"), vb=svg.viewBox.baseVal, W=vb.width, H=vb.height;
+  const g=el("g",{}); svg.appendChild(g);
+  const head=(p,u)=>{const s=7,w=3.2,bx=p.x-u.x*s,by=p.y-u.y*s;
+    g.appendChild(el("polygon",{points:p.x+","+p.y+" "+(bx-u.y*w)+","+(by+u.x*w)+" "+(bx+u.y*w)+","+(by-u.x*w),fill:C}));};
+  const dbl=(p,q)=>{const d=sub(q,p),L=len(d); g.appendChild(line(p.x,p.y,q.x,q.y,C,1.6));
+    if(L>14){const u=mul(d,1/L); head(q,u); head(p,mul(u,-1));}};
+  const ext=(p,q)=>{ if(dist(p,q)>1) g.appendChild(line(p.x,p.y,q.x,q.y,C,1,{"stroke-dasharray":"2 3",opacity:.8})); };
+  const label=(x,y,s,anchor)=>{ if(!s)return; const t=txt(x,y,s,C,11,anchor||"middle");
+    t.setAttribute("stroke",bg); t.setAttribute("stroke-width",4); t.setAttribute("paint-order","stroke");
+    t.setAttribute("font-weight","600"); t.setAttribute("dominant-baseline","middle"); g.appendChild(t); };
+  prims.forEach(P=>{
+    if(P.t==="al"){ const a=w2s(P.a),b=w2s(P.b),d=sub(b,a),L=len(d)||1,n=v(d.y/L,-d.x/L),o=P.off||0;
+      const a2=add(a,mul(n,o)),b2=add(b,mul(n,o));
+      ext(P.ea?w2s(P.ea):a,a2); ext(P.eb?w2s(P.eb):b,b2); dbl(a2,b2);
+      const m=add(mul(add(a2,b2),.5),mul(n,(o<0?-1:1)*13)); label(m.x,m.y,P.lab); }
+    else if(P.t==="h"){ const a=w2s(P.a),b=w2s(P.b),y=a.y+(P.off||0);
+      ext(a,v(a.x,y)); ext(b,v(b.x,y)); dbl(v(a.x,y),v(b.x,y)); label((a.x+b.x)/2,y+((P.off||0)>0?12:-11),P.lab); }
+    else if(P.t==="v"){ const a=w2s(P.a),b=w2s(P.b),x=a.x+(P.off||0),right=(P.off||0)>=0;
+      ext(a,v(x,a.y)); ext(b,v(x,b.y)); dbl(v(x,a.y),v(x,b.y)); label(x+(right?7:-7),(a.y+b.y)/2,P.lab,right?"start":"end"); }
+    else if(P.t==="ang"){ const c=w2s(P.c), s0=sub(w2s(add(P.c,P.d0)),c), s1=sub(w2s(add(P.c,P.d1)),c), r=P.r||36;
+      const t0=Math.atan2(s0.y,s0.x), dt=signedAng(s0,s1), t1=t0+dt, pt=t=>v(c.x+r*Math.cos(t),c.y+r*Math.sin(t));
+      const p0=pt(t0),p1=pt(t1);
+      g.appendChild(el("path",{d:"M"+p0.x+" "+p0.y+" A"+r+" "+r+" 0 0 "+(dt>0?1:0)+" "+p1.x+" "+p1.y,fill:"none",stroke:C,"stroke-width":1.6}));
+      if(Math.abs(dt)*r>14){const sg=dt>0?1:-1; head(p1,v(-Math.sin(t1)*sg,Math.cos(t1)*sg)); head(p0,v(Math.sin(t0)*sg,-Math.cos(t0)*sg));}
+      const tm=t0+dt/2, lp=v(c.x+(r+16)*Math.cos(tm),c.y+(r+16)*Math.sin(tm)); label(lp.x,lp.y,P.lab); }
+    else if(P.t==="ln"){ const a=w2s(P.a),b=w2s(P.b); g.appendChild(line(a.x,a.y,b.x,b.y,C,1.2,{"stroke-dasharray":"5 4",opacity:.85})); }
+    else if(P.t==="cl"){ const x=w2s(v(0,P.y)).x; g.appendChild(line(x,28,x,H-28,C,1,{"stroke-dasharray":"6 5",opacity:.6})); label(x,36,"centreline"); }
+    else if(P.t==="gl"){ const y=w2s(v(P.x,0)).y; g.appendChild(line(10,y,W-10,y,C,1,{"stroke-dasharray":"6 5",opacity:.6})); label(W-40,y-9,"ground"); }
+    else if(P.t==="note"){ label(W-12,H-16,P.lab,"end"); }
+  });
+}
+const dimNote=s=>[{t:"note",lab:s}];
+
 /* ================= RENDER: STEERING ================= */
 let sSeed={R:0,L:0};
+function dimsSteer(){
+  const kR=v(S.tk/2,0), kL=v(-S.tk/2,0), aa=S.aa*D2R, sa=add(kR,v(-S.la*Math.sin(aa),-S.la*Math.cos(aa))), inn=v(S.ix,S.iy), fw=34;
+  switch(DIM){
+    case "s_wb": return [{t:"ln",a:v(-S.tk/2,-S.wb),b:v(S.tk/2,-S.wb)},{t:"al",a:v(-S.tk/2-fw,0),b:v(-S.tk/2-fw,-S.wb),ea:kL,eb:v(-S.tk/2,-S.wb),lab:"wheelbase "+mmT(S.wb)}];
+    case "s_tk": return [{t:"al",a:v(-S.tk/2,fw),b:v(S.tk/2,fw),ea:kL,eb:kR,lab:mmT(S.tk)}];
+    case "s_kpoff": { const bx=(B.lox+B.uox)/2; return [{t:"ln",a:v(bx,-8),b:v(bx,fw+8)},{t:"al",a:v(bx,fw),b:v(S.tk/2,fw),ea:v(bx,0),eb:kR,lab:mmT(S.kpoff)}]; }
+    case "s_la": return [{t:"al",a:kR,b:sa,off:-14,lab:mmT(S.la)}];
+    case "s_aa": return [{t:"ln",a:kR,b:add(kR,v(0,-S.la*1.15))},{t:"ang",c:kR,d0:v(0,-1),d1:sub(sa,kR),r:44,lab:dgT(S.aa)}];
+    case "s_ix": return [{t:"h",a:v(0,S.iy),b:inn,off:22,lab:mmT(S.ix)}];
+    case "s_iy": return [{t:"v",a:v(S.ix,0),b:inn,off:-16,lab:mmT(S.iy)}];
+    case "s_targeths": { const t=parseFloat($("s_targeths").value); return isFinite(t)&&t>0?[{t:"h",a:v(0,S.iy),b:v(t,S.iy),off:36,lab:"target "+mmT(t)}]:dimNote("blank = natural spacing"); }
+    case "s_smax": return [{t:"h",a:v(S.ix-S.smax,S.iy),b:v(S.ix+S.smax,S.iy),off:-20,lab:"± "+mmT(S.smax)}];
+    case "s_servo": case "s_horn": return dimNote("servo layout: see the Servo Drive tab");
+    case "s_target": return dimNote("a % target, not a length");
+  }
+  return [];
+}
 function renderSteer(){
   const svg=$("s_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
   const W=640,H=440,pad=48;
@@ -726,6 +787,7 @@ function renderSteer(){
   ext.push(v(0,S.iy),v(0, -S.wb*0)); // centreline anchor
   // include wheel outlines
   const wr=26, ww=10;
+  const dims=dimsSteer(); ext.push(...dimPts(dims));
   const w2s=fitter(ext,W,H,pad);
 
   const travel=S.input*S.smax;
@@ -777,6 +839,7 @@ function renderSteer(){
   // labels
   svg.appendChild(txt(12,20,"PLAN VIEW — top",muted,11));
   svg.appendChild(txt(12,H-14,"forward ↑",faint,10));
+  drawDims(svg,w2s,dims);
 
   // readouts
   const wa=wheelAngles(st);
@@ -883,6 +946,31 @@ function renderAckChart(){
 
 /* ================= RENDER: BUMP ================= */
 let bSeed=0;
+const NOTE_Y="fore/aft (Y) — not visible in front view; see the 3D View";
+function dimsBump(p,pose){ // p = current pose; pose(dz) = pose at that travel from the measured position
+  if(!p)return [];
+  const LI=p.LI,UI=p.UI,LO=p.LO,UO=p.UO, TO=v(B.tox,B.toz), TI=v(B.tix,B.tiz);
+  const pm=pose(0), pr=pose(B.ride);
+  switch(DIM){
+    case "b_lix": return [{t:"cl",y:LI.y},{t:"h",a:v(0,LI.y),b:LI,off:22,lab:mmT(B.lix)}];
+    case "b_liz": return [{t:"gl",x:LI.x},{t:"v",a:v(LI.x,0),b:LI,off:-18,lab:mmT(B.liz)}];
+    case "b_ll": return [{t:"al",a:LI,b:LO,off:-16,lab:mmT(B.ll)}];
+    case "b_warm": return pm?[{t:"ln",a:LI,b:pm.LO},{t:"ln",a:LI,b:add(LI,v(B.ll,0))},{t:"ang",c:LI,d0:v(1,0),d1:sub(pm.LO,LI),r:44,lab:dgT(B.warm)+" (as measured)"}]:[];
+    case "b_uix": return [{t:"cl",y:UI.y},{t:"h",a:v(0,UI.y),b:UI,off:-22,lab:mmT(B.uix)}];
+    case "b_spacing": return [{t:"v",a:LI,b:UI,off:-24,lab:mmT(B.spacing)}];
+    case "b_ul": return [{t:"al",a:UI,b:UO,off:16,lab:mmT(B.ul)}];
+    case "b_knuckleH": return [{t:"al",a:LO,b:UO,off:-18,lab:mmT(B.knuckleH)}];
+    case "b_tox": return [{t:"cl",y:TO.y},{t:"h",a:v(0,TO.y),b:TO,off:-14,lab:mmT(B.tox)}];
+    case "b_toz": return [{t:"gl",x:TO.x},{t:"v",a:v(TO.x,0),b:TO,off:16,lab:mmT(B.toz)}];
+    case "b_tix": return [{t:"cl",y:TI.y},{t:"h",a:v(0,TI.y),b:TI,off:14,lab:mmT(B.tix)}];
+    case "b_tiz": return [{t:"gl",x:TI.x},{t:"v",a:v(TI.x,0),b:TI,off:-16,lab:mmT(B.tiz)}];
+    case "b_toy": case "b_tiy": return dimNote(NOTE_Y);
+    case "b_ride": return pm&&pr?[{t:"ln",a:LI,b:pm.LO},{t:"ln",a:LI,b:pr.LO},{t:"v",a:pm.LO,b:pr.LO,off:24,lab:mmT(B.ride)}]:[];
+    case "b_droop": case "b_bump": { const pe=pose(B.ride+(DIM==="b_droop"?-B.droop:B.bump)); const val=DIM==="b_droop"?B.droop:B.bump;
+      return pr&&pe?[{t:"ln",a:LI,b:pe.LO},{t:"v",a:pr.LO,b:pe.LO,off:24,lab:mmT(val)}]:[]; }
+  }
+  return [];
+}
 function renderBump(){
   const svg=$("b_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
   const W=640,H=440,pad=54;
@@ -902,6 +990,7 @@ function renderBump(){
   const ext=[];
   [-B.droop,-B.droop/2,0,B.bump/2,B.bump].forEach(f=>{const pp=wishbonePose(thetaForTravel(B.ride+f));if(pp){ext.push(pp.LI,pp.UI,pp.LO,pp.UO);}});
   ext.push(v(B.tix,B.tiz),v(B.tox,B.toz));
+  const dims=dimsBump(p,dz=>wishbonePose(thetaForTravel(dz))); ext.push(...dimPts(dims));
   const w2s=fitter(ext,W,H,pad);
   const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),rodC=css("--rod"),linkC=css("--link"),wheelC=css("--wheel"),pivotC=css("--pivot"),faint=css("--faint"),ghost=css("--ghost"),acc2=css("--accent-2");
 
@@ -936,6 +1025,7 @@ function renderBump(){
   svg.appendChild(circ(LI.x,LI.y,4,pivotC,{})); svg.appendChild(circ(UI.x,UI.y,4,pivotC,{}));
   svg.appendChild(circ(LO.x,LO.y,3.4,linkC,{})); svg.appendChild(circ(UO.x,UO.y,3.4,linkC,{}));
   svg.appendChild(txt(12,H-14,"↑ up   → outboard    ("+(fromRest>=0?"+":"")+fromRest.toFixed(0)+" mm from rest)",faint,10));
+  drawDims(svg,w2s,dims);
 
   // readouts — toe referenced to the resting position
   $("ro_toe").innerHTML=fmt(res.valid?(res.toeDeg-refDeg):0,2)+'<small>°</small>';
@@ -1057,6 +1147,17 @@ function renderServo(){
   const theta=V.input*thr;
   const st=servoSolve(theta, vSeed); vSeed=st.bind?vSeed:st.beta;
   const ext=[]; [-thr,0,thr].forEach(t=>{const s=servoSolve(t,0); ext.push(s.Pg,s.Ps,s.Hb,s.Bi0,s.Bo0); if(!s.bind)ext.push(s.Bi,s.Bo);});
+  const dims=(()=>{ const hornNote="servo horn not drawn — push = horn × sin(throw) = "+mmT(V.lh*Math.sin(thr));
+    if(DIM==="v_throw"||DIM==="v_lh") return dimNote(hornNote);
+    if(st.bind) return [];
+    switch(DIM){
+      case "v_ri": return [{t:"al",a:st.Pg,b:st.Bi,off:14,lab:mmT(Math.abs(V.ri))}];
+      case "v_ro": return [{t:"al",a:st.Pg,b:st.Bo,off:-14,lab:mmT(V.ro)}];
+      case "v_g": return [{t:"ang",c:st.Pg,d0:st.Bi,d1:st.Bo,r:30,lab:dgT(V.g)}];
+      case "v_reach": return [{t:"al",a:st.Ps,b:st.Bi,off:14,lab:mmT(V.reach)}];
+      case "v_pushangle": return [{t:"ln",a:st.Ps,b:add(st.Ps,v(0,V.reach))},{t:"ang",c:st.Ps,d0:v(0,1),d1:st.d,r:34,lab:dgT(V.pushAngle)}];
+    } return []; })();
+  ext.push(...dimPts(dims));
   const w2s=fitter(ext,W,H,pad);
   const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),rodC=css("--rod"),linkC=css("--link"),pivotC=css("--pivot"),faint=css("--faint"),ghost=css("--ghost"),acc2=css("--accent-2");
   svg.appendChild(txt(12,20,"TOP VIEW — servo → green bellcrank → steering",muted,11));
@@ -1077,6 +1178,7 @@ function renderServo(){
   } else { svg.appendChild(txt(W/2,H/2,"servo push exceeds input arm — shorten horn / lengthen input arm",css("--bad"),12,"middle")); }
   svg.appendChild(el("rect",{x:Ps.x-11,y:Ps.y-7,width:22,height:14,rx:2,fill:"none",stroke:linkC,"stroke-width":2}));
   svg.appendChild(txt(Ps.x,Ps.y+20,"servo",faint,10,"middle"));
+  drawDims(svg,w2s,dims);
   svg.appendChild(circ(Pg.x,Pg.y,4,pivotC,{})); svg.appendChild(txt(Pg.x+7,Pg.y+3,"bellcrank",faint,10));
 
   const sweep=servoSweep(); const atP=sweep[sweep.length-1], atM=sweep[0];
@@ -1177,6 +1279,16 @@ const SUS={sm:30, sux:30, suz:52, spring:2.5, weight:400, sagT:30, input:0};
 const Susids={sm:"su_sm",sux:"su_sux",suz:"su_suz",spring:"su_spring",weight:"su_weight",sagT:"su_sagt"};
 function susT4T(dz){ const th0=neutralTheta(); const zAt=th=>B.liz+B.ll*Math.sin(th); let lo=th0-1.2,hi=th0+1.2,tg=zAt(th0)+dz; for(let i=0;i<60;i++){const m=(lo+hi)/2; if((zAt(m)-tg)*(zAt(lo)-tg)<=0)hi=m;else lo=m;} return (lo+hi)/2; }
 function shockAt(theta){ const LI=v(B.lix,B.liz); const SMl=add(LI,v(SUS.sm*Math.cos(theta),SUS.sm*Math.sin(theta))); const SU=v(SUS.sux,SUS.suz); return {SMl,SU,len:dist(SMl,SU)}; }
+function dimsSus(p,sk){
+  const SU=v(SUS.sux,SUS.suz);
+  switch(DIM){
+    case "su_sm": return p?[{t:"al",a:p.LI,b:sk.SMl,off:-14,lab:mmT(SUS.sm)}]:[];
+    case "su_sux": return [{t:"cl",y:SU.y},{t:"h",a:v(0,SU.y),b:SU,off:-14,lab:mmT(SUS.sux)}];
+    case "su_suz": return [{t:"gl",x:SU.x},{t:"v",a:v(SU.x,0),b:SU,off:16,lab:mmT(SUS.suz)}];
+    case "su_spring": case "su_weight": case "su_sagt": return dimNote("not a geometry dimension");
+  }
+  return [];
+}
 function renderSus(){
   const svg=$("su_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
   const W=640,H=440,pad=54;
@@ -1199,6 +1311,7 @@ function renderSus(){
   const sagTgt=SUS.sagT/100*tot, KsNeed=(MR>0&&sagTgt>0)?(Wn/sagTgt)/(MR*MR):0;
   // fit
   const ext=[];[-B.droop,0,B.bump].forEach(f=>{const th=susT4T(B.ride+f);const pp=wishbonePose(th);const s=shockAt(th);if(pp){ext.push(pp.LI,pp.UI,pp.LO,pp.UO);}ext.push(s.SMl,s.SU);});
+  const dims=dimsSus(p,shockAt(theta)); ext.push(...dimPts(dims));
   const w2s=fitter(ext,W,H,pad);
   const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),linkC=css("--link"),wheelC=css("--wheel"),pivotC=css("--pivot"),faint=css("--faint"),acc2=css("--accent-2");
   svg.appendChild(txt(12,20,"FRONT VIEW — suspension + shock",muted,11));
@@ -1234,6 +1347,7 @@ function renderSus(){
     chip(sagPct>=22&&sagPct<=38?"good":sagPct>=15&&sagPct<=45?"warn":"bad","sag "+sagPct.toFixed(0)+"% ("+sag.toFixed(1)+" mm) · ride freq "+freq.toFixed(1)+" Hz");
     chip("","for "+SUS.sagT+"% sag use ≈ "+KsNeed.toFixed(2)+" N/mm spring (wheel rate "+Kw.toFixed(2)+" N/mm)");
   }
+  drawDims(svg,w2s,dims);
   renderSusChart(rows,Lmin,Lmax);
 }
 function renderSusChart(rows,Lmin,Lmax){
@@ -1274,6 +1388,19 @@ function dsAt(theta, steerDeg){
   const cvOut=Math.acos(clamp(dot3(norm3(spin),sd),-1,1))*R2D;   // vs hub spin axis
   return {hub,diff,spin,len,cvIn,cvOut,LO,UO,LI:to3(p.LI),UI:to3(p.UI)};
 }
+function dimsDS(){
+  const D=v(DS.dx,DS.dz), Hb=v(DS.hx,DS.hz), lvl="hub entered with the lower arm level";
+  switch(DIM){
+    case "ds_dx": return [{t:"cl",y:D.y},{t:"h",a:v(0,D.y),b:D,off:16,lab:mmT(DS.dx)}];
+    case "ds_dz": return [{t:"gl",x:D.x},{t:"v",a:v(D.x,0),b:D,off:-16,lab:mmT(DS.dz)}];
+    case "ds_hx": return [{t:"cl",y:Hb.y},{t:"h",a:v(0,Hb.y),b:Hb,off:-16,lab:mmT(DS.hx)},{t:"note",lab:lvl}];
+    case "ds_hz": return [{t:"gl",x:Hb.x},{t:"v",a:v(Hb.x,0),b:Hb,off:16,lab:mmT(DS.hz)},{t:"note",lab:lvl}];
+    case "ds_dy": case "ds_hy": return dimNote(NOTE_Y);
+    case "ds_steer": return dimNote("steer angle — try the Steering slider");
+    case "ds_cvmax": return dimNote("joint limit — red dashed line on the chart below");
+  }
+  return [];
+}
 function renderDS(){
   const svg=$("ds_svg"); while(svg.firstChild)svg.removeChild(svg.firstChild);
   const W=640,H=440,pad=54; const tot=(B.droop+B.bump)||1;
@@ -1293,6 +1420,7 @@ function renderDS(){
   const rideM=dsAt(dsT4T(B.ride),0); const Lride=rideM?rideM.len:0; const plunge=(Lmax>-1e8)?Lmax-Lmin:0;
   const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),acc2=css("--accent-2"),linkC=css("--link"),wheelC=css("--wheel"),faint=css("--faint");
   const ext=[]; [-B.droop,0,B.bump].forEach(f=>{[0,steerNow].forEach(sg=>{const m=dsAt(dsT4T(B.ride+f),sg);if(m){ext.push(v(m.diff.x,m.diff.z),v(m.hub.x,m.hub.z),v(m.LO.x,m.LO.z),v(m.UO.x,m.UO.z),v(m.LI.x,m.LI.z),v(m.UI.x,m.UI.z));}});});
+  const dims=dimsDS(); ext.push(...dimPts(dims));
   const w2s=fitter(ext,W,H,pad);
   svg.appendChild(txt(12,20,"FRONT VIEW — driveshaft (steering swings hub fore/aft, shown as length)",muted,11));
   svg.appendChild(txt(12,H-14,"↑ up   → outboard   ("+(fromRest>=0?"+":"")+fromRest.toFixed(0)+" mm, steer "+(steerNow>=0?"+":"")+steerNow.toFixed(0)+"°)",faint,10));
@@ -1315,6 +1443,7 @@ function renderDS(){
   chip(worst<DS.cvmax*0.8?"good":worst<DS.cvmax?"warn":"bad","peak joint angle "+worst.toFixed(0)+"° vs "+DS.cvmax.toFixed(0)+"° limit (full travel & lock)");
   chip("","plunge "+plunge.toFixed(1)+" mm over the envelope — cup depth / plunge travel must exceed this");
   if(cur) chip("","now: "+(fromRest>=0?"+":"")+fromRest.toFixed(0)+" mm, "+(steerNow>=0?"+":"")+steerNow.toFixed(0)+"° → in "+cur.cvIn.toFixed(0)+"° / out "+cur.cvOut.toFixed(0)+"°");
+  drawDims(svg,w2s,dims);
   renderDSChart(rows0,rowsL);
 }
 function renderDSChart(rows0,rowsL){
@@ -1351,6 +1480,15 @@ function renderAlign(){
   const wTop=v(wc.x+AL.rw*wdir.x, wc.y+AL.rw*wdir.y), wBot=v(wc.x-AL.rw*wdir.x, wc.y-AL.rw*wdir.y);
   const kpTop=v(UO.x+(UO.x-LO.x)/dz*20, UO.y+20);              // extend axis a bit above
   const ext=[LO,UO,v(kgX,0),wc,wTop,wBot,v(contactX,0),v(Math.min(kgX,contactX)-10,0),v(Math.max(kgX,contactX,wc.x+AL.rw)+10,0)];
+  const dims=(()=>{ switch(DIM){
+    case "al_rw": return [{t:"v",a:v(wc.x,0),b:wc,off:16,lab:mmT(AL.rw)}];
+    case "al_wcx": return [{t:"cl",y:wc.y},{t:"h",a:v(0,wc.y),b:wc,off:-16,lab:mmT(AL.wcx)}];
+    case "al_camber": return [{t:"ln",a:wc,b:add(wc,v(0,AL.rw*1.25))},{t:"ang",c:wc,d0:v(0,1),d1:wdir,r:52,lab:dgT(AL.camber)}];
+    case "al_caster": case "ro_alcaster": case "ro_altrail": return dimNote("caster & trail are side-view — not shown in this front view");
+    case "ro_alkpi": return [{t:"ln",a:LO,b:add(LO,v(0,(UO.y-LO.y)*1.3))},{t:"ang",c:LO,d0:v(0,1),d1:sub(UO,LO),r:44,lab:dgT(KPI)}];
+    case "ro_alscrub": return [{t:"h",a:v(kgX,0),b:v(contactX,0),off:36,lab:mmT(scrub)}];
+  } return []; })();
+  ext.push(...dimPts(dims));
   const w2s=fitter(ext,W,H,pad);
   const grid=css("--line-2"),muted=css("--muted"),accent=css("--accent"),acc2=css("--accent-2"),wheelC=css("--wheel"),pivotC=css("--pivot"),faint=css("--faint"),good=css("--good");
   // ground line
@@ -1375,6 +1513,7 @@ function renderAlign(){
   svg.appendChild(line(kg.x,by-4,kg.x,by+4,accent,1.5)); svg.appendChild(line(cp.x,by-4,cp.x,by+4,accent,1.5));
   svg.appendChild(txt((kg.x+cp.x)/2,by+13,"scrub "+scrub.toFixed(0)+" mm",accent,10,"middle"));
   svg.appendChild(txt(kg.x-4,kg.y-6,"axis",acc2,9.5,"end")); svg.appendChild(txt(cp.x+5,cp.y-6,"contact",accent,9.5));
+  drawDims(svg,w2s,dims);
   // readouts
   $("ro_alkpi").innerHTML=KPI.toFixed(1)+'<small>°</small>';
   $("ro_alscrub").innerHTML=scrub.toFixed(1)+'<small>mm</small>';
@@ -1654,6 +1793,16 @@ const TIPS={
   const hide=()=>tip.classList.remove("on");
   document.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest("[data-tip]"); if(t)show(t); else hide();});
   window.addEventListener("scroll",hide,{passive:true});
+})();
+
+// dimension arrows: hovering or focusing an input row (or a readout) highlights that dimension on the diagram
+(function(){
+  const renders={steer:renderSteer,bump:renderBump,sus:renderSus,ds:renderDS,align:renderAlign,servo:renderServo};
+  function setDim(id){ if(DIM===id)return; DIM=id;
+    const sec=document.querySelector("section[id^='tab-']:not([hidden])"); const f=sec&&renders[sec.id.slice(4)]; if(f)f(); }
+  document.querySelectorAll(".field input[type=number]").forEach(inp=>{
+    const pick=()=>setDim(inp.id); inp.closest(".field").addEventListener("mouseenter",pick); inp.addEventListener("focus",pick); });
+  document.querySelectorAll(".ro .v[id]").forEach(e=>e.parentElement.addEventListener("mouseenter",()=>setDim(e.id)));
 })();
 
 // init
