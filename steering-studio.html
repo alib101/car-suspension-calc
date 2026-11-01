@@ -100,6 +100,11 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:0}
 .guide code{font-family:var(--mono);font-size:12px;background:var(--inset);padding:1px 5px;border-radius:4px}
 .foot{color:var(--faint);font-size:11.5px;margin-top:16px;text-align:center;line-height:1.6}
 svg text{font-family:var(--mono)}
+[data-tip]{cursor:help;text-decoration:underline dotted var(--faint);text-underline-offset:3px}
+#tip{position:fixed;z-index:50;max-width:280px;padding:8px 10px;border-radius:7px;font-size:12px;line-height:1.45;
+  text-transform:none;letter-spacing:normal;color:var(--ink);background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow);pointer-events:none;opacity:0;transition:opacity .12s}
+#tip.on{opacity:1}
 </style>
 
 <div class="wrap">
@@ -1538,6 +1543,118 @@ try{const saved=localStorage.getItem("ss_theme"); if(saved){themeState=states.in
 function applyTheme(){const s=states[themeState]; if(s)document.documentElement.setAttribute("data-theme",s); else document.documentElement.removeAttribute("data-theme"); try{localStorage.setItem("ss_theme",s||"auto");}catch(e){}}
 applyTheme();
 $("theme").addEventListener("click",()=>{themeState=(themeState+1)%3;applyTheme(); if(!$("tab-steer").hidden)renderSteer(); if(!$("tab-bump").hidden)renderBump();});
+
+// tooltips — keyed by the input id (fields, sliders) or readout value id (.ro)
+// Axes: X = lateral from the car centreline (outboard +), Y = fore/aft from the kingpin/front-axle line (forward +), Z = height above the ground.
+const TIPS={
+  // steering
+  s_wb:"Front axle line to rear axle line, centre to centre (plan view). Used for the Ackermann targets and turn radius.",
+  s_tk:"Full width between the left and right steering axes (kingpins), centre to centre — each kingpin sits at ± half this from the centreline. Narrower than the wheel track. Solve everything sets it to 2 × (wishbone outer-ball X + kingpin offset).",
+  s_kpoff:"Sideways distance from the wishbone outer ball joints (average X of upper & lower ball, from the Bump tab) to the steering pivot. Positive = kingpin outboard of the balls. 0 = kingpin runs through the ball joints, as on a conventional upright. Used by Solve everything to place the kingpin.",
+  s_la:"Steering arm length: kingpin axis to the track-rod outer ball, in plan view. Longer = less wheel angle per mm of pickup travel.",
+  s_aa:"Angle of the steering arm from straight back (fore/aft), plan view. The arm points rearward from the kingpin; positive angles its ball inboard. 0° ≈ parallel steer; more angle = more Ackermann.",
+  s_target:"The Ackermann % that 'Solve arm angle' aims for, measured at 15° outer-wheel angle. 0% = parallel steer, 100% = ideal (both wheel lines meet on the rear axle line).",
+  s_ix:"Lateral distance from the car centreline to each inner track-rod pickup (rack end / bellcrank ball) at centre steer. The two pickups are 2× this apart. Same point as the Bump tab's inner ball X.",
+  s_iy:"Fore/aft position of the inner pickups relative to the kingpin (front axle) line. Negative = behind the axle line.",
+  s_targeths:"Optional. The half-spacing you want the pickups to end up at (e.g. to clear a gearbox). Solve everything slides the whole steering outboard via the kingpin offset to reach it. Blank = natural spacing.",
+  s_input:"Current sideways shift of the inner pickups (rack / bellcrank travel) from centre, up to ± Max pickup travel.",
+  s_smax:"How far the inner pickups move sideways each way at full lock. Sets the sweep range and the travel the servo must deliver.",
+  s_servo:"Servo horn rotation each way from centre at full lock (your transmitter end-points).",
+  s_horn:"Servo horn radius: output-shaft centre to the hole/ball you use. Linear travel ≈ horn × sin(throw).",
+  ro_l:"Left wheel steer angle at the current steering input.",
+  ro_r:"Right wheel steer angle at the current steering input.",
+  ro_ack:"How much more the inner wheel turns than the outer, as a % of ideal Ackermann for this wheelbase and kingpin track. 0% = parallel, 100% = ideal. Shown once the outer wheel passes 1.5°.",
+  ro_rad:"Approximate turning radius at the current outer-wheel angle, from wheelbase and kingpin track.",
+  // bump
+  b_lix:"Lateral distance from the car centreline to the lower wishbone's chassis pivot (hinge pin).",
+  b_liz:"Height above the ground of the lower wishbone's chassis pivot.",
+  b_ll:"Front-view length of the lower wishbone: inner pivot to outer ball-joint centre.",
+  b_warm:"Angle of the lower wishbone from horizontal at the position you measured the geometry. Positive = outer end higher than the inner. 0 = level.",
+  b_uix:"Lateral distance from the car centreline to the upper wishbone's chassis pivot.",
+  b_spacing:"Vertical gap between the lower and upper chassis pivots. Upper pivot Z = lower pivot Z + this.",
+  b_ul:"Front-view length of the upper wishbone: inner pivot to outer ball-joint centre.",
+  b_knuckleH:"Distance between the lower and upper outer ball joints on the upright, centre to centre. With the arm lengths it sets the kingpin inclination.",
+  b_tox:"Lateral distance from the centreline to the track-rod outer ball (on the steering arm / upright), at rest and straight ahead.",
+  b_toz:"Height above the ground of the track-rod outer ball.",
+  b_toy:"Fore/aft of the track-rod outer ball relative to the kingpin line. Negative = behind. Should match the Steering tab's arm.",
+  b_tix:"Lateral distance from the centreline to the track rod's inner ball (rack / bellcrank end). Same point as the Steering tab's half-spacing.",
+  b_tiz:"Height above the ground of the track rod's inner ball — the main knob for tuning bump steer.",
+  b_tiy:"Fore/aft of the track rod's inner ball relative to the kingpin line. Doesn't affect bump steer here.",
+  b_ride:"Where the wheel sits at static ride height relative to the position you measured the geometry. Negative = drooped below it. Toe is zeroed here.",
+  b_droop:"How far the wheel can drop from rest (downward travel).",
+  b_bump:"How far the wheel can rise from rest (upward travel).",
+  b_input:"Current wheel position relative to rest: negative = droop, positive = bump.",
+  ro_toe:"Toe change at the current travel, relative to rest — this is bump steer.",
+  ro_rate:"Bump-steer rate at the current travel: degrees of toe per mm of wheel movement. Close to 0 is good.",
+  ro_rc:"Height above the ground of the front-view instant centre (where the upper and lower arm lines meet) at the current travel. A full roll-centre construction would also draw a line from the tyre contact patch.",
+  ro_aim:"Angle between the track rod and a line from its outer ball to the instant centre. 0° = rod points at the IC, the classic rule for low bump steer.",
+  // suspension
+  su_sm:"Distance along the lower wishbone from its inner pivot to the shock's lower mount.",
+  su_sux:"Lateral distance from the centreline to the shock's upper (chassis / tower) mount.",
+  su_suz:"Height above the ground of the shock's upper mount.",
+  su_spring:"Spring stiffness: force per mm of spring compression.",
+  su_weight:"Mass carried by this one wheel, in grams.",
+  su_sagt:"How far you want the car to settle under its corner weight, as a % of total wheel travel (droop + bump). Used to suggest a spring rate.",
+  su_input:"Current wheel position relative to rest: negative = droop, positive = bump.",
+  ro_slen:"Shock length eye-to-eye at ride height.",
+  ro_sstroke:"Change in shock length between full droop and full bump — the minimum stroke your shock needs.",
+  ro_smr:"Shock movement per mm of wheel movement, at ride height. Wheel rate = spring rate × MR².",
+  ro_ssag:"How far the wheel settles under the corner weight, as a % of total travel (from spring rate × MR²).",
+  // driveshaft
+  ds_dx:"Lateral distance from the centreline to the inboard joint centre (diff / gearbox outdrive). Fixed to the chassis.",
+  ds_dy:"Fore/aft of the inboard joint centre relative to the kingpin / axle line.",
+  ds_dz:"Height above the ground of the inboard joint centre, entered with the lower arm level.",
+  ds_hx:"Lateral distance from the centreline to the outboard joint centre (in the hub), entered with the lower arm level.",
+  ds_hy:"Fore/aft of the outboard joint centre relative to the kingpin / axle line.",
+  ds_hz:"Height above the ground of the outboard joint centre, entered with the lower arm level.",
+  ds_steer:"How far the wheel turns each way at full lock. Joint angles are checked across this whole range.",
+  ds_cvmax:"The largest angle your joint can run before binding or popping out (dogbone / CV rating). Warnings compare against it.",
+  ds_input:"Current wheel position relative to rest: negative = droop, positive = bump.",
+  ds_steerinput:"Current steer angle of the wheel, up to ± Steer lock.",
+  ro_dslen:"Driveshaft length, joint centre to joint centre, at ride height and straight ahead.",
+  ro_dsplunge:"How much the shaft length changes over full travel × full steering — your joints must slide at least this much.",
+  ro_dscvin:"Largest inboard (diff-end) joint angle anywhere in the travel × steer range.",
+  ro_dscvout:"Largest outboard (hub-end) joint angle anywhere in the travel × steer range.",
+  // alignment
+  al_rw:"Tyre radius: axle centre to the ground.",
+  al_wcx:"Lateral distance from the centreline to the tyre's centre plane at axle height.",
+  al_camber:"Wheel tilt seen from the front. Negative = top of the tyre leans in towards the car.",
+  al_caster:"Rearward tilt of the steering axis seen from the side. Positive = top of the axis behind the bottom. Sets trail.",
+  ro_alkpi:"Kingpin inclination: how far the steering axis (through the ball joints) leans in at the top, in front view.",
+  ro_alscrub:"Distance at the ground between where the steering axis meets the ground and the tyre contact centre. Positive = tyre outboard of the axis.",
+  ro_alcaster:"The caster angle you entered.",
+  ro_altrail:"How far the contact patch trails behind where the steering axis meets the ground (side view) = radius × tan(caster). The self-centring lever.",
+  // servo drive
+  v_throw:"Servo horn rotation each way from centre at full lock.",
+  v_lh:"Servo horn radius: output-shaft centre to the ball the push rod uses. Push = horn × sin(throw).",
+  v_reach:"Distance from the servo back along the push line to the bellcrank's input ball (effectively the push-rod length). Changes the layout and transmission angle, not the ratio.",
+  v_pushangle:"Direction of the servo push in plan view. 0 = straight fore/aft.",
+  v_ri:"Bellcrank input arm: pivot to the ball the servo pushes on. The sign sets which side of the pivot it sits.",
+  v_ro:"Bellcrank output arm: pivot to the ball that drives the steering. Ratio = output ÷ input arm.",
+  v_g:"Included angle between the bellcrank's input and output arms. 90° = L-shaped bellcrank.",
+  v_input:"Current servo horn angle, up to ± Throw.",
+  ro_out:"Sideways travel of the bellcrank output ball at full throw, each way.",
+  ro_push:"Linear push the horn delivers at full throw = horn × sin(throw).",
+  ro_ratio:"Average output travel ÷ servo push.",
+  ro_reach:"Whether the output reaches the Steering tab's Max pickup travel in both directions."
+};
+(function(){
+  const tip=document.createElement("div"); tip.id="tip"; tip.setAttribute("role","tooltip"); document.body.appendChild(tip);
+  function attach(lab,id){ if(!lab||!TIPS[id])return; lab.dataset.tip=TIPS[id];
+    const inp=$(id); if(inp&&inp.tagName==="INPUT")inp.setAttribute("aria-description",TIPS[id]); }
+  for(const id in TIPS){ const e=$(id); if(!e)continue;
+    if(e.classList.contains("v")) attach(e.parentElement.querySelector(".k"),id);
+    else attach(e.closest(".field")?e.closest(".field").querySelector("label"):document.querySelector('label[for="'+id+'"]'),id);
+  }
+  function show(t){ tip.textContent=t.dataset.tip; tip.classList.add("on");
+    const r=t.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight;
+    const x=clamp(r.left,8,window.innerWidth-w-8);
+    const y=(r.bottom+6+h<=window.innerHeight-8)?r.bottom+6:Math.max(8,r.top-h-6);
+    tip.style.left=x+"px"; tip.style.top=y+"px"; }
+  const hide=()=>tip.classList.remove("on");
+  document.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest("[data-tip]"); if(t)show(t); else hide();});
+  window.addEventListener("scroll",hide,{passive:true});
+})();
 
 // init
 $("s_inputv").textContent="0.0 mm";
